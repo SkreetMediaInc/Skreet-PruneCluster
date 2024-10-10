@@ -1,3 +1,5 @@
+import Rbush from 'rbush';
+
 // The position is the real position of the object
 // using a standard coordinate system, as WGS 84
 export interface Position {
@@ -292,12 +294,12 @@ export class Cluster extends ClusterObject {
     }
 }
 
-function checkPositionInsideBounds(a: Position, b: Bounds): boolean {
+export function checkPositionInsideBounds(a: Position, b: Bounds): boolean {
     return (a.lat >= b.minLat && a.lat <= b.maxLat) &&
         a.lng >= b.minLng && a.lng <= b.maxLng;
 }
 
-function insertionSort(list: ClusterObject[]) {
+export function insertionSort(list: ClusterObject[]) {
     for (let i: number = 1,
              j: number,
              tmp: ClusterObject,
@@ -317,7 +319,7 @@ function insertionSort(list: ClusterObject[]) {
 // on sorted or almost sorted collections.
 //
 // However the insertion sort's worst case is extreme and we should avoid it.
-function shouldUseInsertionSort(total: number, nbChanges: number): boolean {
+export function shouldUseInsertionSort(total: number, nbChanges: number): boolean {
     if (nbChanges > 300) {
         return false;
     } else {
@@ -479,9 +481,7 @@ export class PruneCluster {
         }
 
         // Filter out clusters with population 0
-        let newClustersList: Cluster[] = clusters.filter(c => c.population > 0);
-
-        this._clusters = newClustersList;
+        this._clusters = clusters.filter(c => c.population > 0);
         this._sortClusters();
 
         return this._clusters;
@@ -591,4 +591,156 @@ export class PruneCluster {
         this._clusters = [];
     }
 
+}
+
+// @ts-ignore
+export class RBushCluster {
+    private _markers: PruneClusterMarker[] = [];
+    private _markerTree: Rbush<PruneClusterMarker>;  // Use Rbush for spatial indexing
+
+    private _nbChanges: number = 0;
+    private _clusters: Cluster[] = [];
+    public Size: number = 166;
+    public ViewPadding: number = 0.2;
+
+    public Project: (lat: number, lng: number) => Point;
+    public UnProject: (x: number, y: number) => Position;
+
+    constructor() {
+        this._markerTree = new Rbush<PruneClusterMarker>();  // Initialize Rbush
+    }
+
+    public RegisterMarker(marker: PruneClusterMarker) {
+        if ((<any>marker)._removeFlag) {
+            delete (<any>marker)._removeFlag;
+        }
+        this._markers.push(marker);
+        this._markerTree.insert(marker);  // Insert marker into Rbush tree
+        this._nbChanges += 1;
+    }
+
+    public RegisterMarkers(markers: PruneClusterMarker[]) {
+        this._markers.push(...markers);
+        this._markerTree.load(markers);  // Bulk load markers into Rbush
+    }
+
+    public RemoveMarkers(markers?: PruneClusterMarker[]) {
+        if (!markers) {
+            this._markers = [];
+            this._markerTree.clear();  // Clear the Rbush tree
+            return;
+        }
+
+        for (let marker of markers) {
+            this._markerTree.remove(marker);  // Remove markers from Rbush
+            marker._removeFlag = true;
+        }
+
+        this._markers = this._markers.filter(m => !m._removeFlag);
+    }
+
+    public ProcessView(bounds: Bounds): Cluster[] {
+        this._sortMarkers();
+        this._resetClusterViews();
+
+        const extendedBounds: Bounds = this._getExtendedBounds(bounds);
+
+        const markersInView = this._markerTree.search({
+            minX: extendedBounds.minLng,
+            minY: extendedBounds.minLat,
+            maxX: extendedBounds.maxLng,
+            maxY: extendedBounds.maxLat
+        });
+
+        const clusters = this._clusterMarkersInView(markersInView);
+        return clusters;
+    }
+
+    private _getExtendedBounds(bounds: Bounds): Bounds {
+        const heightBuffer = Math.abs(bounds.maxLat - bounds.minLat) * this.ViewPadding;
+        const widthBuffer = Math.abs(bounds.maxLng - bounds.minLng) * this.ViewPadding;
+
+        return {
+            minLat: bounds.minLat - heightBuffer,
+            maxLat: bounds.maxLat + heightBuffer,
+            minLng: bounds.minLng - widthBuffer,
+            maxLng: bounds.maxLng + widthBuffer
+        };
+    }
+
+    private _clusterMarkersInView(markers: PruneClusterMarker[]): Cluster[] {
+        const clusters: Cluster[] = [];
+        const workingClusterList: Cluster[] = [];
+
+        for (let marker of markers) {
+            if (marker.filtered) continue;
+
+            let clusterFound = false;
+
+            for (let cluster of workingClusterList) {
+                if (checkPositionInsideBounds(marker.position, cluster.bounds)) {
+                    cluster.AddMarker(marker);
+                    clusterFound = true;
+                    break;
+                }
+            }
+
+            if (!clusterFound) {
+                const newCluster = new Cluster(marker);
+                newCluster.ComputeBounds(this);
+                clusters.push(newCluster);
+                workingClusterList.push(newCluster);
+            }
+        }
+
+        this._clusters = clusters;
+        return clusters;
+    }
+
+    public FindMarkersInArea(area: Bounds): PruneClusterMarker[] {
+        return this._markerTree.search({
+            minX: area.minLng,
+            minY: area.minLat,
+            maxX: area.maxLng,
+            maxY: area.maxLat
+        });
+    }
+
+    public ComputeBounds(markers: PruneClusterMarker[], withFiltered: boolean = true): Bounds | null {
+        if (!markers || !markers.length) return null;
+
+        let rMinLat = Number.MAX_VALUE,
+            rMaxLat = -Number.MAX_VALUE,
+            rMinLng = Number.MAX_VALUE,
+            rMaxLng = -Number.MAX_VALUE;
+
+        for (let marker of markers) {
+            if (!withFiltered && marker.filtered) continue;
+            const { lat, lng } = marker.position;
+
+            if (lat < rMinLat) rMinLat = lat;
+            if (lat > rMaxLat) rMaxLat = lat;
+            if (lng < rMinLng) rMinLng = lng;
+            if (lng > rMaxLng) rMaxLng = lng;
+        }
+
+        return { minLat: rMinLat, maxLat: rMaxLat, minLng: rMinLng, maxLng: rMaxLng };
+    }
+
+    public ResetClusters() {
+        this._clusters = [];
+    }
+
+    private _sortMarkers() {
+        if (this._nbChanges) {
+            this._nbChanges = 0;
+        }
+    }
+
+    private _resetClusterViews() {
+        for (let cluster of this._clusters) {
+            cluster.Reset();
+            cluster.ComputeBounds(this);
+        }
+    }
 }

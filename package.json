@@ -11,8 +11,9 @@
     "build:dev": "bun build ./src/**/*.ts --outdir build --target es5 --sourcemap && cp LeafletStyleSheet.css build/LeafletStyleSheet.css"
   },
   "dependencies": {
+    "leaflet": "^1.9.4",
     "pixi.js": "^8.4.1",
-    "leaflet": "^1.9.4"
+    "rbush": "^4.0.1"
   },
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
