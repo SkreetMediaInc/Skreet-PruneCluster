@@ -1,31 +1,24 @@
 {
-  "name": "@sintef/prune-cluster",
-  "version": "2.1.0",
-  "homepage": "https://github.com/SINTEF-9012/PruneCluster",
-  "description": "Fast and realtime marker clustering for Leaflet",
-  "keywords": [
-    "map",
-    "clustering",
-    "leaflet",
-    "marker",
-    "realtime"
-  ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/SINTEF-9012/PruneCluster.git"
-  },
+  "name": "@skreet/prune-cluster",
+  "version": "2.1.1",
+  "description": "Fast and realtime marker clustering for Leaflet (modified for Skreet)",
   "main": "./dist/PruneCluster.js",
+  "scripts": {
+    "build": "bun run build:dist",
+    "dev": "bun run build:dev",
+    "test": "bun test",
+    "build:dist": "bun build ./src/**.ts --outdir dist --minify && cp LeafletStyleSheet.css src/LeafletStyleSheet.css",
+    "build:dev": "bun build ./src/**/*.ts --outdir build --target es5 --sourcemap && cp LeafletStyleSheet.css build/LeafletStyleSheet.css"
+  },
+  "dependencies": {
+    "pixi.js": "^8.4.1",
+    "leaflet": "^1.9.4"
+  },
   "devDependencies": {
-    "grunt": "^1.0.1",
-    "grunt-contrib-clean": "~1.1.0",
-    "grunt-contrib-copy": "~1.0.0",
-    "grunt-contrib-uglify": "~3.0.1",
-    "grunt-exec": "^2.0.0",
-    "grunt-ts": "~6.0.0-beta.16",
-    "load-grunt-tasks": "~3.5.2",
-    "spacejam": "^1.1.1",
-    "time-grunt": "~1.4.0",
-    "typescript": "^2.4.1"
+    "@types/jsdom": "^21.1.7",
+    "@types/leaflet": "^1.9.12",
+    "bun-types": "^0.1.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^4.0.0"
   }
 }
