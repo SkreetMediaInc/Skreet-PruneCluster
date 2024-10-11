@@ -1,9 +1,26 @@
-import {Map, LatLng, DivIcon, Marker, Point, LatLngBounds, Layer, Icon, Util, DomUtil} from 'leaflet';
-import {PruneCluster, Cluster, Bounds, PruneClusterMarker} from './PruneCluster';
-import PruneClusterLeafletSpiderfier from "./LeafletSpiderfier";  // Adjust import based on where the classes are located
+import {
+    Map,
+    LatLng,
+    DivIcon,
+    Marker,
+    Point,
+    LatLngBounds,
+    Layer,
+    Icon,
+    Util,
+    DomUtil,
+    map,
+    marker,
+    control
+} from 'leaflet';
+import PruneCluster from "./PruneCluster";
+import {Cluster} from "./Cluster";
+import PruneClusterLeafletSpiderfier from "./LeafletSpiderfier";
+import ClusterMarker from "./ClusterMarker";
+import {Bounds, LeafletMarker} from "./types";
 
 // @ts-ignore
-export declare class LeafletAdapter implements Layer {
+export interface LeafletAdapter implements Layer {
     Cluster: PruneCluster;
 
     onAdd: (map: L.Map) => this;
@@ -18,18 +35,11 @@ export declare class LeafletAdapter implements Layer {
     RedrawIcons: (processView?: boolean) => void;
 
     BuildLeafletCluster: (cluster: Cluster, position: LatLng) => Layer;
-    BuildLeafletClusterIcon: (cluster: Cluster) => Icon;
-    BuildLeafletMarker: (marker: Marker, position: LatLng) => Marker;
-    PrepareLeafletMarker: (marker: Marker, data: {}, category: number) => void;
+    BuildLeafletClusterIcon: (cluster: Cluster) => Icon | DivIcon;
+    BuildLeafletMarker: (marker: any, position: LatLng) => Marker;
+    PrepareLeafletMarker: (marker: any, data: {}, category: number) => void;
 }
 
-// The adapter store these properties inside L.Marker objects
-export interface LeafletMarker extends Marker {
-    _population?: number;
-    _hashCode?: number;
-    _zoomLevel?: number;
-    _removeFromMap?: boolean;
-}
 
 // What is inside cluster.data objects
 export interface ILeafletAdapterData {
@@ -41,7 +51,7 @@ export interface ILeafletAdapterData {
 }
 
 
-class PruneClusterForLeaflet extends Layer {
+class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
     Cluster: PruneCluster;
     spiderfier: any;
     _objectsOnMap: any[];
@@ -59,6 +69,16 @@ class PruneClusterForLeaflet extends Layer {
         super();
         this.Cluster = new PruneCluster();
         this.Cluster.Size = size;
+
+        this.clusterMargin = Math.min(clusterMargin, size / 4);
+
+        // Bind the Leaflet project and unproject methods to the cluster
+        this.Cluster.Project = (lat: number, lng: number) =>
+            this._map!.project(new LatLng(lat, lng), Math.floor(this._map!.getZoom()));
+
+        this.Cluster.UnProject = (x: number, y: number) =>
+            this._map!.unproject(new Point(x, y), Math.floor(this._map!.getZoom()));
+
         this.clusterMargin = Math.min(clusterMargin, size / 4);
         this._objectsOnMap = [];
         this.spiderfier = new PruneClusterLeafletSpiderfier(this);
@@ -98,12 +118,12 @@ class PruneClusterForLeaflet extends Layer {
         return this;
     }
 
-    RegisterMarker(marker: PruneClusterMarker): void {
+    RegisterMarker(marker: ClusterMarker | Marker): void {
         // @ts-ignore
         this.Cluster.RegisterMarker(marker);
     }
 
-    RegisterMarkers(markers: PruneClusterMarker[]): void {
+    RegisterMarkers(markers: ClusterMarker[] | Marker[]): void {
         // @ts-ignore
         this.Cluster.RegisterMarkers(markers);
     }
@@ -229,7 +249,7 @@ class PruneClusterForLeaflet extends Layer {
         });
     }
 
-    BuildLeafletMarker(marker: PruneClusterMarker, position: LatLng): Marker {
+    BuildLeafletMarker(marker: ClusterMarker, position: LatLng): Marker {
         const leafletMarker = new Marker(position);
         this.PrepareLeafletMarker(leafletMarker, marker.data, marker.category);
         return leafletMarker;
@@ -247,7 +267,9 @@ class PruneClusterForLeaflet extends Layer {
     }
 
     ProcessView() {
-        let marker;
+        let latMargin;
+        let lngMargin;
+        let marker: any;
 // Don't do anything during the map manipulation
         if (!this._map || this._zoomInProgress || this._moveInProgress) {
             return;
@@ -275,30 +297,30 @@ class PruneClusterForLeaflet extends Layer {
             markersOnMap: Marker[] = new Array(objectsOnMap.length);
 
 // Second step : By default, all the leaflet markers should be removed
-        for (var i = 0, l = objectsOnMap.length; i < l; ++i) {
+        for (let i = 0, l = objectsOnMap.length; i < l; ++i) {
             marker = (objectsOnMap[i].data)._leafletMarker;
             markersOnMap[i] = marker;
             marker._removeFromMap = true;
         }
 
-        var clusterCreationList: Cluster[] = [];
-        var clusterCreationListPopOne: Cluster[] = [];
+        let clusterCreationList: Cluster[] = [];
+        let clusterCreationListPopOne: Cluster[] = [];
 
-        var opacityUpdateList: any[] = [];
+        let opacityUpdateList: any[] = [];
 
 // Third step : anti collapsing system
 // => merge collapsing cluster using a sweep and prune algorithm
-        var workingList: Cluster[] = [];
+        let workingList: Cluster[] = [];
 
-        for (i = 0, l = clusters.length; i < l; ++i) {
-            var icluster = clusters[i],
+        for (let i = 0, l = clusters.length; i < l; ++i) {
+            let icluster = clusters[i],
                 iclusterData = <ILeafletAdapterData>icluster.data;
 
-            var latMargin = (icluster.bounds.maxLat - icluster.bounds.minLat) * marginRatio,
-                lngMargin = (icluster.bounds.maxLng - icluster.bounds.minLng) * marginRatio;
+            latMargin = (icluster.bounds.maxLat - icluster.bounds.minLat) * marginRatio;
+            lngMargin = (icluster.bounds.maxLng - icluster.bounds.minLng) * marginRatio;
 
-            for (var j = 0, ll = workingList.length; j < ll; ++j) {
-                var c = workingList[j];
+            for (let j = 0, ll = workingList.length; j < ll; ++j) {
+                let c = workingList[j];
                 if (c.bounds.maxLng < icluster.bounds.minLng) {
                     workingList.splice(j, 1);
                     --j;
@@ -306,7 +328,7 @@ class PruneClusterForLeaflet extends Layer {
                     continue;
                 }
 
-                var oldMaxLng = c.averagePosition.lng + lngMargin,
+                let oldMaxLng = c.averagePosition.lng + lngMargin,
                     oldMinLat = c.averagePosition.lat - latMargin,
                     oldMaxLat = c.averagePosition.lat + latMargin,
                     newMinLng = icluster.averagePosition.lng - lngMargin,
@@ -331,8 +353,8 @@ class PruneClusterForLeaflet extends Layer {
 // Fourth step : update the already existing leaflet markers and create
 // a list of required new leaflet markers 
         clusters.forEach((cluster: Cluster) => {
-            var m = undefined;
-            var data = <ILeafletAdapterData>cluster.data;
+            let m = undefined;
+            let data = <ILeafletAdapterData>cluster.data;
 
             // Ignore collapsing clusters detected by the previous step
             if (data._leafletCollision) {
@@ -343,14 +365,16 @@ class PruneClusterForLeaflet extends Layer {
                 return;
             }
 
-            var position = new LatLng(cluster.averagePosition.lat, cluster.averagePosition.lng);
+            let position = new LatLng(cluster.averagePosition.lat, cluster.averagePosition.lng);
 
             // If the cluster is already attached to a leaflet marker
-            var oldMarker = data._leafletMarker;
+            let oldMarker = data._leafletMarker;
             if (oldMarker) {
 
+                let hasLeafletPopulationProperty = data._leafletOldPopulation !== undefined;
+
                 // If it's a single marker and it doesn't have changed
-                if (cluster.population === 1 && data._leafletOldPopulation === 1 && cluster.hashCode === oldMarker._hashCode) {
+                if (cluster.population === 1 && (hasLeafletPopulationProperty && data._leafletOldPopulation === 1) && cluster.hashCode === oldMarker._hashCode) {
                     // Update if the zoom level has changed or if we need to reset the icon
                     if (resetIcons || oldMarker._zoomLevel !== zoom || cluster.lastMarker.data.forceIconRedraw) {
                         this.PrepareLeafletMarker(
@@ -366,8 +390,7 @@ class PruneClusterForLeaflet extends Layer {
                     m = oldMarker;
 
                     // If it's a cluster marker on the same position
-                } else if (cluster.population > 1 && data._leafletOldPopulation > 1 && (oldMarker._zoomLevel === zoom ||
-                    data._leafletPosition.equals(position))) {
+                } else if (data._leafletOldPopulation !== undefined && (cluster.population > 1 && data._leafletOldPopulation > 1 && (oldMarker._zoomLevel === zoom || (data._leafletPosition !== undefined && data._leafletPosition.equals(position))))) {
 
                     // Update the position
                     oldMarker.setLatLng(position);
@@ -422,26 +445,27 @@ class PruneClusterForLeaflet extends Layer {
 // is moving on the map and its grid cell changes
         clusterCreationList = clusterCreationListPopOne.concat(clusterCreationList);
 
-        for (i = 0, l = objectsOnMap.length; i < l; ++i) {
-            icluster = objectsOnMap[i];
-            var idata = <ILeafletAdapterData>icluster.data;
+        let oldMaxLng;
+        for (let i = 0, l = objectsOnMap.length; i < l; ++i) {
+            let icluster = objectsOnMap[i];
+            let idata = <ILeafletAdapterData>icluster.data;
             marker = idata._leafletMarker;
 
             // We do not recycle markers already in use
             if (idata._leafletMarker && idata._leafletMarker._removeFromMap) {
                 // If the sweep and prune algorithm doesn't find anything,
                 // the leaflet marker can't be recycled and it will be removed
-                var remove = true;
+                let remove = true;
 
                 // Recycle marker only with the same zoom level
                 if (marker && marker._zoomLevel === zoom) {
-                    var pa = icluster.averagePosition;
+                    let pa = icluster.averagePosition;
 
                     latMargin = (icluster.bounds.maxLat - icluster.bounds.minLat) * marginRatio,
                         lngMargin = (icluster.bounds.maxLng - icluster.bounds.minLng) * marginRatio;
 
-                    for (j = 0, ll = clusterCreationList.length; j < ll; ++j) {
-                        var jcluster = clusterCreationList[j],
+                    for (let j = 0, ll = clusterCreationList.length; j < ll; ++j) {
+                        let jcluster = clusterCreationList[j],
                             jdata = <ILeafletAdapterData>jcluster.data;
 
 
@@ -467,9 +491,9 @@ class PruneClusterForLeaflet extends Layer {
 
                         } else {
 
-                            var pb = jcluster.averagePosition;
-                            var oldMinLng = pa.lng - lngMargin,
-                                newMaxLng = pb.lng + lngMargin;
+                            let pb = jcluster.averagePosition;
+                            let oldMinLng = pa.lng - lngMargin,
+                                newMaxLng = pb.lng + lngMargin, oldMinLat, oldMaxLat, newMinLng, newMinLat, newMaxLat;
 
                             oldMaxLng = pa.lng + lngMargin;
                             oldMinLat = pa.lat - latMargin;
@@ -485,7 +509,7 @@ class PruneClusterForLeaflet extends Layer {
                                 // Update everything
                                 marker.setLatLng(jdata._leafletPosition);
                                 marker.setIcon(this.BuildLeafletClusterIcon(jcluster));
-                                var poisson = {};
+                                let poisson = {};
                                 Util.extend(poisson, jcluster.bounds);
                                 (<any>marker)._leafletClusterBounds = poisson;
                                 jdata._leafletOldPopulation = jcluster.population;
@@ -522,13 +546,13 @@ class PruneClusterForLeaflet extends Layer {
         }
 
 // Sixth step : Create the new leaflet markers
-        for (i = 0, l = clusterCreationList.length; i < l; ++i) {
-            icluster = clusterCreationList[i],
+        for (let i = 0, l = clusterCreationList.length; i < l; ++i) {
+            let icluster = clusterCreationList[i],
                 idata = <ILeafletAdapterData>icluster.data;
 
-            var iposition = idata._leafletPosition;
+            let iposition = idata._leafletPosition;
 
-            var creationMarker: any;
+            let creationMarker: any;
             if (icluster.population === 1) {
                 // @ts-ignore
                 creationMarker = this.BuildLeafletMarker(icluster.lastMarker, iposition);
@@ -555,7 +579,7 @@ class PruneClusterForLeaflet extends Layer {
 
 // Start the fading in transition
         window.setTimeout(() => {
-            for (i = 0, l = opacityUpdateList.length; i < l; ++i) {
+            for (let i = 0, l = opacityUpdateList.length; i < l; ++i) {
                 var m = opacityUpdateList[i];
                 if (m._icon) DomUtil.addClass(m._icon, "prunecluster-anim");
                 if (m._shadow) DomUtil.addClass(m._shadow, "prunecluster-anim");
@@ -565,7 +589,7 @@ class PruneClusterForLeaflet extends Layer {
 
 // Remove the remaining unused markers
         if (this._hardMove) {
-            for (i = 0, l = markersOnMap.length; i < l; ++i) {
+            for (let i = 0, l = markersOnMap.length; i < l; ++i) {
                 marker = markersOnMap[i];
                 // @ts-ignore
                 if (marker._removeFromMap) {
@@ -575,13 +599,13 @@ class PruneClusterForLeaflet extends Layer {
         } else {
             if (this._removeTimeoutId !== 0) {
                 window.clearTimeout(this._removeTimeoutId);
-                for (i = 0, l = this._markersRemoveListTimeout.length; i < l; ++i) {
+                for (let i = 0, l = this._markersRemoveListTimeout.length; i < l; ++i) {
                     map.removeLayer(this._markersRemoveListTimeout[i]);
                 }
             }
 
             var toRemove: any[] = [];
-            for (i = 0, l = markersOnMap.length; i < l; ++i) {
+            for (let i = 0, l = markersOnMap.length; i < l; ++i) {
                 marker = markersOnMap[i];
                 // @ts-ignore
                 if (marker._removeFromMap) {
@@ -591,7 +615,7 @@ class PruneClusterForLeaflet extends Layer {
             }
             if (toRemove.length > 0) {
                 this._removeTimeoutId = window.setTimeout(() => {
-                    for (i = 0, l = toRemove.length; i < l; ++i) {
+                    for (let i = 0, l = toRemove.length; i < l; ++i) {
                         map.removeLayer(toRemove[i]);
                     }
                     this._removeTimeoutId = 0;
@@ -640,6 +664,10 @@ class PruneClusterForLeaflet extends Layer {
         this._zoomInProgress = false;
         this.ProcessView();
     };
+
+    GetMarkers(): Marker[] {
+        return [];
+    }
 }
 
 export default PruneClusterForLeaflet;
