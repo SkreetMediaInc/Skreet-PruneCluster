@@ -1,17 +1,23 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "amd",
+    "target": "es2020",
+    "module": "esnext",
     "declaration": true,
     "sourceMap": true,
+    "allowSyntheticDefaultImports": true, // Allow default imports from modules without a default export
+    "esModuleInterop": true,    // Enable compatibility with CommonJS modules
+
     "outDir": "./dist",
+    "baseUrl": ".",
+    "@/*": ["src/*"],       // Custom path mappings if needed
+    "~/*": ["src/*"],       // Custom path mappings if needed
+
     //    "forceConsistentCasingInFileNames": true,
     "strict": true
     //    "skipLibCheck": true
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules"

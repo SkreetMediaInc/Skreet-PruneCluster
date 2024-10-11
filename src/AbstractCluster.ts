@@ -2,9 +2,14 @@
 import {ClusterMarker} from "./ClusterMarker";
 import {Cluster} from "./Cluster";
 import {insertionSort} from "./utils";
-import {ICluster, Position, Point, Bounds} from "./types";
+import {ICluster} from "./ICluster";
+import {Point} from "./Point";
+import {Position} from "./Position";
+import {Bounds} from "./Bounds";
+import {IClusterObject} from "./IClusterObject";
 
 export abstract class AbstractCluster implements ICluster {
+
     Project!: (lat: number, lng: number) => Point;
     UnProject!: (x: number, y: number) => Position;
     public Size: number = 166;

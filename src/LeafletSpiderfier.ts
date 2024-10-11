@@ -197,4 +197,4 @@ const PruneClusterLeafletSpiderfier = ((<any>L).Layer ? (<any>L).Layer : L.Class
 	}
 });
 
-export default PruneClusterLeafletSpiderfier;
+export {PruneClusterLeafletSpiderfier};

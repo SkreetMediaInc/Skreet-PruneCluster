@@ -13,11 +13,12 @@ import {
     marker,
     control
 } from 'leaflet';
-import PruneCluster from "./PruneCluster";
 import {Cluster} from "./Cluster";
-import PruneClusterLeafletSpiderfier from "./LeafletSpiderfier";
 import ClusterMarker from "./ClusterMarker";
-import {Bounds, LeafletMarker} from "./types";
+import {PruneCluster} from "./PruneCluster";
+import {LeafletMarker} from "./LeafletMarker";
+import {Bounds} from "./Bounds";
+import {PruneClusterLeafletSpiderfier} from "./LeafletSpiderfier";
 
 // @ts-ignore
 export interface LeafletAdapter implements Layer {
@@ -51,7 +52,7 @@ export interface ILeafletAdapterData {
 }
 
 
-class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
+export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
     Cluster: PruneCluster;
     spiderfier: any;
     _objectsOnMap: any[];

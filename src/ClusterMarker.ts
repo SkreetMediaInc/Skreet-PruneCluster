@@ -1,5 +1,6 @@
 import HashCodeCounter from "./HashCodeCounter";
-import {IClusterObject, Position} from "./types";
+import {Position} from "./Position";
+import {IClusterObject} from "./IClusterObject";
 
 export class ClusterMarker implements IClusterObject {
 
@@ -23,7 +24,7 @@ export class ClusterMarker implements IClusterObject {
 
     constructor(lat: number, lng: number, data: {} = {},
                 category?: number, weight: number = 1, filtered: boolean = false) {
-        this.position = {lat, lng};
+        this.position = {lat: lat, lng: lng};
         this.data = data;
         this.weight = weight;
         this.category = category || 0;
@@ -49,3 +50,4 @@ export class ClusterMarker implements IClusterObject {
 }
 
 export default ClusterMarker;
+

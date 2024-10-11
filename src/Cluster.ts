@@ -1,9 +1,9 @@
 import {MaxHashCodeValue} from "./HashCodeCounter";
 import ClusterMarker from "./ClusterMarker";
-import {IClusterObject} from "./types";
 import {Bounds} from "./Bounds";
 import {Position} from "./Position";
 import {PruneCluster} from "./PruneCluster";
+import {IClusterObject} from "./IClusterObject";
 
 export class Cluster implements IClusterObject {
     // Cluster area
@@ -86,6 +86,12 @@ export class Cluster implements IClusterObject {
 
         this.totalWeight = marker.weight;
 
+        if (!marker.position) {
+            throw new Error(`position is required:` + JSON.stringify(marker));
+        }
+
+        console.debug(`Cluster: ${JSON.stringify(marker)}`);
+
         this.position = {
             lat: marker.position.lat,
             lng: marker.position.lng
@@ -154,8 +160,9 @@ export class Cluster implements IClusterObject {
     // Compute the bounds
     // Settle the cluster to the projected grid
     public ComputeBounds(cluster: PruneCluster) {
+        console.log(`Position: ${this.position.lat}, ${this.position.lng}`);
 
-        let proj = cluster.Project(this.position.lat, this.position.lng);
+        let proj = cluster.Project(+this.position.lat, +this.position.lng);
 
         let size = cluster.Size;
 
