@@ -74,8 +74,14 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         this.clusterMargin = Math.min(clusterMargin, size / 4);
 
         // Bind the Leaflet project and unproject methods to the cluster
-        this.Cluster.Project = (lat: number, lng: number) =>
-            this._map!.project(new LatLng(lat, lng), Math.floor(this._map!.getZoom()));
+        this.Cluster.Project = (lat: number, lng: number) => {
+            if (!this._map) {
+                throw new Error('Map is not defined');
+            }
+
+            let projection = this._map!.project(new LatLng(lat, lng), Math.floor(this._map!.getZoom()));
+            return projection;
+        }
 
         this.Cluster.UnProject = (x: number, y: number) =>
             this._map!.unproject(new Point(x, y), Math.floor(this._map!.getZoom()));
@@ -92,12 +98,21 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         this._map = null;
     }
 
-    onAdd(map: Map): any {
+    onAdd(map: Map): this {
         this._map = map;
-        map.on('movestart', this._moveStart, this);
-        map.on('moveend', this._moveEnd, this);
-        map.on('zoomstart', this._zoomStart, this);
-        map.on('zoomend', this._zoomEnd, this);
+
+        // Bind the Leaflet project and unproject methods to the cluster
+        this.Cluster.Project = (lat: number, lng: number) =>
+            this._map!.project(new LatLng(lat, lng), Math.floor(this._map!.getZoom()));
+
+        this.Cluster.UnProject = (x: number, y: number) =>
+            this._map!.unproject(new Point(x, y), Math.floor(this._map!.getZoom()));
+
+        map.on('movestart', this._moveStart.bind(this), this);
+        // @ts-ignore
+        map.on('moveend', this._moveEnd.bind(this), this);
+        map.on('zoomstart', this._zoomStart.bind(this), this);
+        map.on('zoomend', this._zoomEnd.bind(this), this);
         this.ProcessView();
 
         map.addLayer(this.spiderfier);
@@ -106,6 +121,7 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
 
     onRemove(map: Map): any {
         map.off('movestart', this._moveStart, this);
+        //@ts-ignore
         map.off('moveend', this._moveEnd, this);
         map.off('zoomstart', this._zoomStart, this);
         map.off('zoomend', this._zoomEnd, this);
@@ -651,11 +667,10 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         this._moveInProgress = true;
     };
 
-    _moveEnd = (e: any) => {
+    _moveEnd(event?: { hard: boolean }): void {
         this._moveInProgress = false;
-        this._hardMove = e.hard;
-        this.ProcessView();
-    };
+        this._hardMove = event?.hard || false;
+    }
 
     _zoomStart = () => {
         this._zoomInProgress = true;

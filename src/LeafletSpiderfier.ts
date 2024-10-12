@@ -151,7 +151,6 @@ export class PruneClusterLeafletSpiderfier extends L.Layer {
 
         setTimeout(() => {
             this._currentMarkers.forEach((marker) => {
-                console.log('Removing Marker:', marker); // Debugging
                 this._map.removeLayer(marker);
             });
             this._currentMarkers = [];

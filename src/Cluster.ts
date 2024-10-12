@@ -54,13 +54,9 @@ export class Cluster implements IClusterObject {
 
 
     constructor(marker?: ClusterMarker) {
-        // Create a stats table optimized for categories between 0 and 7
         this.stats = [0, 0, 0, 0, 0, 0, 0, 0];
         this.data = {};
 
-
-        // You can provide a marker directly in the constructor
-        // It's like using AddMarker, but a bit faster
         if (!marker) {
             this.hashCode = 1;
             if (Cluster.ENABLE_MARKERS_LIST) {
@@ -74,36 +70,30 @@ export class Cluster implements IClusterObject {
         }
 
         this.lastMarker = marker;
-
         this.hashCode = 31 + marker.hashCode;
-
         this.population = 1;
 
         if (marker.category !== undefined) {
-            // @ts-ignore
             this.stats[marker.category] = 1;
         }
 
         this.totalWeight = marker.weight;
 
         if (!marker.position) {
-            throw new Error(`position is required:` + JSON.stringify(marker));
+            throw new Error(`position is required: ${JSON.stringify(marker)}`);
         }
 
+        this.position = {lat: marker.position.lat, lng: marker.position.lng};
+        this.averagePosition = {lat: marker.position.lat, lng: marker.position.lng};
 
-        this.position = {
-            lat: marker.position.lat,
-            lng: marker.position.lng
+        // Set initial bounds based on the marker's position
+        this.bounds = {
+            minLat: marker.position.lat,
+            maxLat: marker.position.lat,
+            minLng: marker.position.lng,
+            maxLng: marker.position.lng,
         };
-
-        this.averagePosition = {
-            lat: marker.position.lat,
-            lng: marker.position.lng
-        };
-
     }
-
-
 
     public AddMarker(marker: ClusterMarker) {
 
