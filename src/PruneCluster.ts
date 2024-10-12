@@ -8,8 +8,6 @@ import {Position} from "./Position";
 import {Point} from "./Point";
 
 export class PruneCluster extends AbstractCluster {
-    public Project!: (lat: number, lng: number) => Point;
-    public UnProject!: (x: number, y: number) => Position;
 
     public RegisterMarker(marker: ClusterMarker): void {
         if ((<any>marker)._removeFlag) {

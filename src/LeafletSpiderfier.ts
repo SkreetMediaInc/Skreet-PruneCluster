@@ -16,7 +16,6 @@ export class PruneClusterLeafletSpiderfier extends L.Layer {
     private _cluster: PruneClusterForLeaflet;
     private _currentMarkers: L.Marker[] = [];
     private _lines = L.polyline([], {weight: 1.5, color: "#222"});
-    public _map!: L.Map;
     private _currentCenter?: Position;
     private _clusterMarker?: L.Marker;
 

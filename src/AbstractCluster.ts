@@ -42,7 +42,18 @@ export abstract class AbstractCluster implements ICluster {
 
     public SortMarkers(): void {
         if (this._nbChanges) {
-            this._markers.sort((a, b) => a.position.lng - b.position.lng);
+            try {
+                console.log(`Sorting ${this._markers.length} markers`);
+                console.log(this._markers);
+                this._markers.sort((a, b) => {
+                    let order: number = a.position.lng - b.position.lng
+                    console.log(`ClusterMarkers: ${a.position.lng} - ${b.position.lng} = ${order}`);
+                    console.log(a, b);
+                    return order;
+                });
+            } catch (e) {
+                console.error(e);
+            }
             this._nbChanges = 0;
         }
     }
