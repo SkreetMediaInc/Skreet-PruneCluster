@@ -90,7 +90,6 @@ export class Cluster implements IClusterObject {
             throw new Error(`position is required:` + JSON.stringify(marker));
         }
 
-        console.debug(`Cluster: ${JSON.stringify(marker)}`);
 
         this.position = {
             lat: marker.position.lat,
@@ -160,7 +159,6 @@ export class Cluster implements IClusterObject {
     // Compute the bounds
     // Settle the cluster to the projected grid
     public ComputeBounds(cluster: PruneCluster) {
-        console.log(`Position: ${this.position.lat}, ${this.position.lng}`);
 
         let proj = cluster.Project(+this.position.lat, +this.position.lng);
 

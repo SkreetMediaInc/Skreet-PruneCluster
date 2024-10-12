@@ -1,200 +1,167 @@
 import PruneClusterForLeaflet from "./PruneClusterForLeaflet";
-import L = require("leaflet");
-// Based on https://github.com/jawj/OverlappingMarkerSpiderfier-Leaflet and
-// https://github.com/Leaflet/Leaflet.markercluster because it works very perfectly
+import * as L from "leaflet";
+import {Position} from "./Position";
 
+export class PruneClusterLeafletSpiderfier extends L.Layer {
+    private readonly _2PI = Math.PI * 2;
+    private readonly _circleFootSeparation = 25;
+    private readonly _circleStartAngle = Math.PI / 6;
+    private readonly _spiralFootSeparation = 28;
+    private readonly _spiralLengthStart = 11;
+    private readonly _spiralLengthFactor = 5;
+    private readonly _spiralCountTrigger = 8;
 
-// @ts-ignore
-const PruneClusterLeafletSpiderfier = ((<any>L).Layer ? (<any>L).Layer : L.Class).extend({
-	_2PI: Math.PI * 2,
-	_circleFootSeparation: 25, //related to circumference of circle
-	_circleStartAngle: Math.PI / 6,
+    public spiderfyDistanceMultiplier = 1;
 
-	_spiralFootSeparation: 28, //related to size of spiral (experiment!)
-	_spiralLengthStart: 11,
-	_spiralLengthFactor: 5,
+    private _cluster: PruneClusterForLeaflet;
+    private _currentMarkers: L.Marker[] = [];
+    private _lines = L.polyline([], {weight: 1.5, color: "#222"});
+    public _map!: L.Map;
+    private _currentCenter?: Position;
+    private _clusterMarker?: L.Marker;
 
-	_spiralCountTrigger: 8,
+    constructor(cluster: PruneClusterForLeaflet) {
+        super();
+        this._cluster = cluster;
+    }
 
-	spiderfyDistanceMultiplier: 1,
+    onAdd(map: L.Map): this {
+        this._map = map;
+        map.on("overlappingmarkers", this.spiderfy.bind(this));
+        map.on("click", this.unspiderfy.bind(this));
+        map.on("zoomend", this.unspiderfy.bind(this));
+        return this;
+    }
 
-	initialize: function (cluster: PruneClusterForLeaflet) {
-		this._cluster = cluster;
-		this._currentMarkers = [];
+    onRemove(map: L.Map): this {
+        this.unspiderfy();
+        map.off("overlappingmarkers", this.spiderfy.bind(this));
+        map.off("click", this.unspiderfy.bind(this));
+        map.off("zoomend", this.unspiderfy.bind(this));
+        return this;
+    }
 
-		this._lines = L.polyline([], {weight: 1.5, color: '#222'});
-	},
+    spiderfy(data: any): void {
+        if (data.cluster !== this._cluster) return;
 
-	onAdd: function (map: L.Map) {
-		this._map = map;
+        this.unspiderfy();
+        const markers = data.markers.filter((marker: any) => !marker.filtered);
 
-		this._map.on('overlappingmarkers', this.Spiderfy, this);
+        this._currentCenter = data.center;
+        const centerPoint = this._map.latLngToLayerPoint(data.center);
 
-		this._map.on('click', this.Unspiderfy, this);
-		this._map.on('zoomend', this.Unspiderfy, this);
-	},
+        const points = markers.length >= this._spiralCountTrigger
+            ? this._generatePointsSpiral(markers.length, centerPoint)
+            : this._generatePointsCircle(markers.length, centerPoint);
 
-	Spiderfy: function (data: any) {
-		// Ignore events from other PruneCluster instances
-		if (data.cluster !== this._cluster) {
-			return;
-		}
+        const leafletMarkers: L.Marker[] = [];
+        const projectedPoints: L.LatLng[] = [];
+        const polylines: L.LatLng[][] = [];
 
-		this.Unspiderfy();
-		// @ts-ignore
-		const markers = data.markers.filter(function (marker) {
-			return !marker.filtered;
-		});
+        points.forEach((point, i) => {
+            const pos = this._map.layerPointToLatLng(point);
+            const marker = this._cluster.BuildLeafletMarker(markers[i], data.center)
+                .setZIndexOffset(5000)
+                .setOpacity(0);
 
-		this._currentCenter = data.center;
+            this._currentMarkers.push(marker);
+            this._map.addLayer(marker);
+            leafletMarkers.push(marker);
+            projectedPoints.push(pos);
 
-		const centerPoint = this._map.latLngToLayerPoint(data.center);
+            polylines.push([data.center, pos]); // Directly store polylines here
+        });
 
-		let points: L.Point[];
-		if (markers.length >= this._spiralCountTrigger) {
-			points = this._generatePointsSpiral(markers.length, centerPoint);
-		} else {
-			if (this._multiLines) { // if multilines, leaflet < 0.8
-				centerPoint.y += 10; // center fix
-			}
-			points = this._generatePointsCircle(markers.length, centerPoint);
-		}
+        setTimeout(() => {
+            leafletMarkers.forEach((marker, i) => {
+                marker.setLatLng(projectedPoints[i]).setOpacity(1);
+            });
 
-		let polylines: L.LatLng[][] = [];
+            this._animateLines(polylines);
+        }, 1);
 
+        if (data.marker) {
+            this._clusterMarker = data.marker.setOpacity(0.3);
+        }
+    }
 
-		const leafletMarkers: L.Marker[] = [];
-		const projectedPoints: L.LatLng[] = [];
+    private _generatePointsCircle(count: number, centerPt: L.Point): L.Point[] {
+        const circumference = this.spiderfyDistanceMultiplier * this._circleFootSeparation * (2 + count);
+        const legLength = circumference / this._2PI;
+        const angleStep = this._2PI / count;
 
-		for (let i = 0, l = points.length; i < l; ++i) {
-			const pos = this._map.layerPointToLatLng(points[i]);
-			const m = this._cluster.BuildLeafletMarker(markers[i], data.center);
-			m.setZIndexOffset(5000);
-			m.setOpacity(0);
+        return Array.from({length: count}, (_, i) => {
+            const angle = this._circleStartAngle + i * angleStep;
+            return new L.Point(
+                Math.round(centerPt.x + legLength * Math.cos(angle)),
+                Math.round(centerPt.y + legLength * Math.sin(angle))
+            );
+        });
+    }
 
-			// polylines.push([data.center, pos]);
+    private _generatePointsSpiral(count: number, centerPt: L.Point): L.Point[] {
+        let legLength = this.spiderfyDistanceMultiplier * this._spiralLengthStart;
+        const separation = this.spiderfyDistanceMultiplier * this._spiralFootSeparation;
+        const lengthFactor = this.spiderfyDistanceMultiplier * this._spiralLengthFactor;
+        let angle = 0;
 
-			this._currentMarkers.push(m);
-			this._map.addLayer(m);
+        return Array.from({length: count}, (_, i) => {
+            angle += separation / legLength + i * 0.0005;
+            const point = new L.Point(
+                Math.round(centerPt.x + legLength * Math.cos(angle)),
+                Math.round(centerPt.y + legLength * Math.sin(angle))
+            );
+            legLength += (this._2PI * lengthFactor) / angle;
+            return point;
+        });
+    }
 
-			leafletMarkers.push(m);
-			projectedPoints.push(pos);
-		}
+    private _animateLines(polylines: L.LatLng[][]): void {
+        const startTime = Date.now();
+        const interval = 42;
+        const duration = 290;
 
-		window.setTimeout(() => {
-			for (let i = 0, l = points.length; i < l; ++i) {
-				leafletMarkers[i].setLatLng(projectedPoints[i])
-					.setOpacity(1);
-			}
+        const anim = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const stepRatio = Math.min(elapsed / duration, 1);
 
-			const startTime = +new Date();
+            const updatedPolylines = polylines.map(([start, end]) => {
+                const diffLat = end.lat - start.lat;
+                const diffLng = end.lng - start.lng;
+                return [
+                    start,
+                    new L.LatLng(start.lat + diffLat * stepRatio, start.lng + diffLng * stepRatio),
+                ];
+            });
 
-			const interval = 42, duration = 290;
-			const anim = window.setInterval(() => {
+            this._lines.setLatLngs(updatedPolylines);
 
-				let stepRatio;
-				polylines = [];
+            if (stepRatio === 1) clearInterval(anim);
+        }, interval);
 
-				const now = +new Date();
-				const d = now - startTime;
-				if (d >= duration) {
-					window.clearInterval(anim);
-					stepRatio = 1.0;
-				} else {
-					stepRatio = d / duration;
-				}
+        this._map.addLayer(this._lines);
+    }
 
-				const center = data.center;
+    unspiderfy(): void {
+        if (this._currentMarkers.length === 0) return; // Prevent redundant unspiderfy calls
 
-				for (let i = 0, l = points.length; i < l; ++i) {
-					const p = projectedPoints[i],
-						diffLat = p.lat - center.lat,
-						diffLng = p.lng - center.lng;
+        this._currentMarkers.forEach((marker) => {
+            marker.setLatLng(this._currentCenter!).setOpacity(0);
+        });
 
-					polylines.push([center, new L.LatLng(center.lat + diffLat * stepRatio, center.lng + diffLng * stepRatio)]);
-				}
+        setTimeout(() => {
+            this._currentMarkers.forEach((marker) => {
+                console.log('Removing Marker:', marker); // Debugging
+                this._map.removeLayer(marker);
+            });
+            this._currentMarkers = [];
+        }, 300);
 
-				this._lines.setLatLngs(polylines);
+        this._map.removeLayer(this._lines);
+        if (this._clusterMarker) {
+            this._clusterMarker.setOpacity(1);
+        }
+    }
+}
 
-			}, interval);
-		}, 1);
-
-		this._lines.setLatLngs(polylines);
-		this._map.addLayer(this._lines);
-
-		if (data.marker) {
-			this._clusterMarker = data.marker.setOpacity(0.3);
-		}
-	},
-
-	_generatePointsCircle: function (count: number, centerPt: L.Point): L.Point[] {
-		const circumference = this.spiderfyDistanceMultiplier * this._circleFootSeparation * (2 + count),
-			legLength = circumference / this._2PI, //radius from circumference
-			angleStep = this._2PI / count,
-			res = [];
-		let i,
-			angle;
-
-		res.length = count;
-
-		for (i = count - 1; i >= 0; i--) {
-			angle = this._circleStartAngle + i * angleStep;
-			res[i] = new L.Point(
-				Math.round(centerPt.x + legLength * Math.cos(angle)),
-				Math.round(centerPt.y + legLength * Math.sin(angle)));
-		}
-
-		return res;
-	},
-
-	_generatePointsSpiral: function (count: number, centerPt: L.Point): L.Point[] {
-		let legLength = this.spiderfyDistanceMultiplier * this._spiralLengthStart;
-		const separation = this.spiderfyDistanceMultiplier * this._spiralFootSeparation,
-			lengthFactor = this.spiderfyDistanceMultiplier * this._spiralLengthFactor;
-		let angle = 0;
-		const res = [];
-		let i;
-
-		res.length = count;
-
-		for (i = count - 1; i >= 0; i--) {
-			angle += separation / legLength + i * 0.0005;
-			res[i] = new L.Point(
-				Math.round(centerPt.x + legLength * Math.cos(angle)),
-				Math.round(centerPt.y + legLength * Math.sin(angle)));
-			legLength += this._2PI * lengthFactor / angle;
-		}
-		return res;
-	},
-
-	Unspiderfy() {
-		for (let i = 0, l = this._currentMarkers.length; i < l; ++i) {
-			this._currentMarkers[i].setLatLng(this._currentCenter).setOpacity(0);
-		}
-
-		const map = this._map;
-		const markers = this._currentMarkers;
-		window.setTimeout(() => {
-			for (let i = 0, l = markers.length; i < l; ++i) {
-				map.removeLayer(markers[i]);
-			}
-
-		}, 300);
-
-		this._currentMarkers = [];
-
-		this._map.removeLayer(this._lines);
-		if (this._clusterMarker) {
-			this._clusterMarker.setOpacity(1);
-		}
-	},
-
-	onRemove: function (map: L.Map) {
-		this.Unspiderfy();
-		map.off('overlappingmarkers', this.Spiderfy, this);
-		map.off('click', this.Unspiderfy, this);
-		map.off('zoomend', this.Unspiderfy, this);
-	}
-});
-
-export {PruneClusterLeafletSpiderfier};
+export default PruneClusterLeafletSpiderfier;

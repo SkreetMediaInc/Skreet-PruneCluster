@@ -61,8 +61,6 @@ export class PruneCluster extends AbstractCluster {
             let clusterFound = false;
 
             for (let cluster of workingClusterList) {
-                console.debug(`Cluster position: ${cluster.position.lat}, ${cluster.position.lng}`);
-                console.debug(`Marker position: ${markerPosition.lat}, ${markerPosition.lng}`);
                 // Handle markers with identical positions or close proximity
                 if ((cluster.position.lat === markerPosition.lat && cluster.position.lng === markerPosition.lng) ||
                     checkPositionInsideBounds(markerPosition, cluster.bounds)) {
@@ -74,9 +72,7 @@ export class PruneCluster extends AbstractCluster {
 
             if (!clusterFound) {
                 const newCluster = new Cluster(marker);
-                console.debug(`New cluster position: ${newCluster.position.lat}, ${newCluster.position.lng}`);
                 newCluster.ComputeBounds(this);
-                console.debug(`New Cluster ComputeBounds called`)
                 clusters.push(newCluster);
                 workingClusterList.push(newCluster);
             }

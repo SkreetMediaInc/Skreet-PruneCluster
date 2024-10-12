@@ -1,4 +1,7 @@
-import {Bounds, IClusterObject, Position, HasPosition} from "./types";
+import {Position} from "./Position";
+import {Bounds} from "./Bounds";
+import {IClusterObject} from "./IClusterObject";
+import {HasPosition} from "./HasPosition";
 
 
 export function checkPositionInsideBounds(a: Position, b: Bounds): boolean {

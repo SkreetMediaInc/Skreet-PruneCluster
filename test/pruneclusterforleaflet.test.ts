@@ -6,7 +6,7 @@ import {Map, LatLng, LatLngBounds, Point} from "leaflet";
 import PruneClusterForLeaflet from "../src/PruneClusterForLeaflet";
 import ClusterMarker from "../src/ClusterMarker";
 import {Bounds} from "../src/Bounds";
-import {Position} from "../src";
+import {Position} from "../src/Position";
 
 describe('PruneClusterForLeaflet', () => {
     let pruneClusterForLeaflet: PruneClusterForLeaflet;
