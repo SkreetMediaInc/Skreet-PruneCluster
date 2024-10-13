@@ -6,7 +6,6 @@ import {ICluster} from "./ICluster";
 import {Point} from "./Point";
 import {Position} from "./Position";
 import {Bounds} from "./Bounds";
-import {IClusterObject} from "./IClusterObject";
 
 export abstract class AbstractCluster implements ICluster {
 
@@ -42,18 +41,10 @@ export abstract class AbstractCluster implements ICluster {
 
     public SortMarkers(): void {
         if (this._nbChanges) {
-            try {
-                console.log(`Sorting ${this._markers.length} markers`);
-                console.log(this._markers);
-                this._markers.sort((a, b) => {
-                    let order: number = a.position.lng - b.position.lng
-                    console.log(`ClusterMarkers: ${a.position.lng} - ${b.position.lng} = ${order}`);
-                    console.log(a, b);
-                    return order;
-                });
-            } catch (e) {
-                console.error(e);
-            }
+                // console.log(`Sorting ${this._markers.length} markers`);
+            this._markers.sort((a, b) => {
+                return a.position.lng - b.position.lng;
+            });
             this._nbChanges = 0;
         }
     }

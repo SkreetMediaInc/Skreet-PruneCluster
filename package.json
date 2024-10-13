@@ -6,9 +6,11 @@
   "scripts": {
     "build": "bun run build:dist",
     "dev": "bun run build:dev",
+    "example": "bun run build:example",
     "test": "bun test",
     "serve": "bunx serve examples",
     "build:dist": "rimraf ./dist && bun build ./src/index.ts --outfile dist/skreet-prunecluster.js --minify --target browser --format esm && cp src/LeafletStyleSheet.css dist/LeafletStyleSheet.css",
+    "build:example": "rimraf ./dist && bun build ./src/index.ts --outfile examples/skreet-prunecluster.js --minify --target browser --format esm && cp src/LeafletStyleSheet.css examples/LeafletStyleSheet.css && bun run serve",
     "build:dev": "rimraf ./dist && bun build ./src/**/*.ts --outdir build --target browser --sourcemap --packages external --format esm && cp LeafletStyleSheet.css build/LeafletStyleSheet.css"
   },
   "dependencies": {

@@ -46,17 +46,17 @@
         markers.push(marker);
         leafletView.RegisterMarker(marker);
     }
-
-    window.setInterval(() => {
-        for (let i = 0; i < size / 2; ++i) {
-            const coef = i < size / 8 ? 10 : 1;
-            const ll = markers[i].position;
-            ll.lat += (Math.random() - 0.5) * 0.00001 * coef;
-            ll.lng += (Math.random() - 0.5) * 0.00002 * coef;
-        }
-
-        leafletView.ProcessView();
-    }, 3000);
+    //
+    // window.setInterval(() => {
+    //     for (let i = 0; i < size / 2; ++i) {
+    //         const coef = i < size / 8 ? 10 : 1;
+    //         const ll = markers[i].position;
+    //         ll.lat += (Math.random() - 0.5) * 0.00001 * coef;
+    //         ll.lng += (Math.random() - 0.5) * 0.00002 * coef;
+    //     }
+    //
+    //     leafletView.ProcessView();
+    // }, 3000);
 
     map.addLayer(leafletView);
 </script>
