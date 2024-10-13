@@ -682,7 +682,11 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
     };
 
     GetMarkers(): Marker[] {
-        return [];
+        let markers = this._objectsOnMap.map((object: any) => {
+            return object.data._leafletMarker;
+        });
+        console.debug('GetMarkers', markers);
+        return markers;
     }
 }
 

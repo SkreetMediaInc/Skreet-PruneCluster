@@ -1,5 +1,3 @@
-
-
 export interface Bounds {
     minLat: number;
     maxLat: number;
