@@ -43,7 +43,7 @@ describe('PruneClusterForLeaflet', () => {
             }),
         } as unknown as jest.Mocked<Map>;
 
-        pruneClusterForLeaflet = new PruneClusterForLeaflet();
+        pruneClusterForLeaflet = new PruneClusterForLeaflet(mockMap);
     });
 
     test('should register a marker', () => {
@@ -302,7 +302,7 @@ describe('PruneClusterForLeaflet', () => {
 
 
     test('should handle move start and end', () => {
-        pruneClusterForLeaflet.onAdd(mockMap);
+        // pruneClusterForLeaflet.onAdd(mockMap);
 
         // Directly invoke the move start handler to ensure state change
         pruneClusterForLeaflet._moveStart();

@@ -9,9 +9,6 @@ import {
     Icon,
     Util,
     DomUtil,
-    map,
-    marker,
-    control
 } from 'leaflet';
 import {Cluster} from "./Cluster";
 import ClusterMarker from "./ClusterMarker";
@@ -66,7 +63,7 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
     _markersRemoveListTimeout: any[];
     clusterMargin: number;
 
-    constructor(size: number = 120, clusterMargin: number = 20) {
+    constructor(size: number = 120, clusterMargin: number = 20, map?: Map = null) {
         super();
         this.Cluster = new PruneCluster();
         this.Cluster.Size = size;
@@ -83,8 +80,10 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
             return projection;
         }
 
-        this.Cluster.UnProject = (x: number, y: number) =>
-            this._map!.unproject(new Point(x, y), Math.floor(this._map!.getZoom()));
+        this.Cluster.UnProject = (x: number, y: number) => {
+            let value = this._map!.unproject(new Point(x, y), Math.floor(this._map!.getZoom()));
+            console.log('UnProject', value);
+        }
 
         this.clusterMargin = Math.min(clusterMargin, size / 4);
         this._objectsOnMap = [];
@@ -95,7 +94,11 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         this._markersRemoveListTimeout = [];
         this._moveInProgress = false;
         this._zoomInProgress = false;
-        this._map = null;
+        this._map = map;
+
+        if (map) {
+            this.onAdd(map);
+        }
     }
 
     onAdd(map: Map): this {
@@ -108,11 +111,12 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         this.Cluster.UnProject = (x: number, y: number) =>
             this._map!.unproject(new Point(x, y), Math.floor(this._map!.getZoom()));
 
-        map.on('movestart', this._moveStart.bind(this), this);
-        // @ts-ignore
-        map.on('moveend', this._moveEnd.bind(this), this);
-        map.on('zoomstart', this._zoomStart.bind(this), this);
-        map.on('zoomend', this._zoomEnd.bind(this), this);
+        map.on('movestart', this._moveStart, this);
+        map.on('moveend', this._moveEnd, this);
+        map.on('zoomstart', this._zoomStart, this);
+        map.on('zoomend', this._zoomEnd, this);
+
+        console.log(`Registered map events: movestart, moveend, zoomstart, zoomend`);
         this.ProcessView();
 
         map.addLayer(this.spiderfier);
@@ -289,8 +293,10 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         let marker: any;
 // Don't do anything during the map manipulation
         if (!this._map || this._zoomInProgress || this._moveInProgress) {
+            console.log('ProcessView: map not ready');
             return;
         }
+        console.log(`ProcessView: Map Zoom=${this._map.getZoom()}, Bounds=${this._map.getBounds()}, Markers Count=${this._objectsOnMap.length}`);
 
         let map = this._map,
             bounds = map.getBounds(),
@@ -556,7 +562,6 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
 
                 // If sadly the leaflet marker can't be recycled
                 if (remove) {
-                    // @ts-ignore
                     if (!marker._removeFromMap) console.error("wtf");
                 }
             }
@@ -564,8 +569,8 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
 
 // Sixth step : Create the new leaflet markers
         for (let i = 0, l = clusterCreationList.length; i < l; ++i) {
-            let icluster = clusterCreationList[i],
-                idata = <ILeafletAdapterData>icluster.data;
+            let icluster: Cluster = clusterCreationList[i],
+                idata: ILeafletAdapterData = <ILeafletAdapterData>icluster.data;
 
             let iposition = idata._leafletPosition;
 
@@ -606,6 +611,7 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
 
 // Remove the remaining unused markers
         if (this._hardMove) {
+            console.log('Hard move');
             for (let i = 0, l = markersOnMap.length; i < l; ++i) {
                 marker = markersOnMap[i];
                 // @ts-ignore
@@ -649,10 +655,13 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
     FitBounds(withFiltered: boolean = true): void {
         const bounds = this.Cluster.ComputeGlobalBounds(withFiltered);
         if (bounds) {
-            this._map!.fitBounds(new LatLngBounds(
+            const leafletLatLngBounds = new LatLngBounds(
                 new LatLng(bounds.minLat, bounds.maxLng),
                 new LatLng(bounds.maxLat, bounds.minLng)
-            ));
+            );
+
+            console.log('FitBounds', leafletLatLngBounds);
+            this._map!.fitBounds(leafletLatLngBounds);
         }
     }
 
@@ -660,24 +669,30 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         this._resetIcons = true;
         if (processView) {
             this.ProcessView();
+            console.log(`RedrawIcons: ${processView}`);
         }
     }
 
     _moveStart = () => {
+        console.log(`Move start in progress`);
         this._moveInProgress = true;
     };
 
     _moveEnd(event?: { hard: boolean }): void {
         this._moveInProgress = false;
+        console.log(`Move end called with event: ${event}`);
         this._hardMove = event?.hard || false;
+        this.ProcessView();
     }
 
     _zoomStart = () => {
         this._zoomInProgress = true;
+        console.log(`Zoom start in progress`);
     };
 
     _zoomEnd = () => {
         this._zoomInProgress = false;
+        console.log(`Zoom end in progress`);
         this.ProcessView();
     };
 
