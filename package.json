@@ -1,31 +1,45 @@
 {
-  "name": "@sintef/prune-cluster",
-  "version": "2.1.0",
-  "homepage": "https://github.com/SINTEF-9012/PruneCluster",
-  "description": "Fast and realtime marker clustering for Leaflet",
-  "keywords": [
-    "map",
-    "clustering",
-    "leaflet",
-    "marker",
-    "realtime"
-  ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/SINTEF-9012/PruneCluster.git"
+  "name": "@skreet/prune-cluster",
+  "version": "1.0.0",
+  "main": "./dist/prune-cluster.iife.js",
+  "module": "./dist/prune-cluster.umd.js",
+  "exports": {
+    ".": {
+      "import": "./dist/prune-cluster.es.js",
+      "require": "./dist/prune-cluster.umd.js"
+    }
   },
-  "main": "./dist/PruneCluster.js",
+  "scripts-old": {
+    "build": "bun run build:dist",
+    "dev": "bun run build && bun --hot dev.ts",
+    "example": "bun run build:example",
+    "test": "bun test",
+    "serve": "bunx serve examples",
+    "build:dist": "rimraf ./dist && bun build --watch ./src/index.ts --outfile dist/skreet-prunecluster.js --minify --target browser --format esm && cp src/LeafletStyleSheet.css dist/LeafletStyleSheet.css",
+    "build:example": "rimraf ./dist && bun build ./src/index.ts --outfile examples/skreet-prunecluster.js --minify --target browser --format esm && cp src/LeafletStyleSheet.css examples/LeafletStyleSheet.css && bun run serve",
+    "build:dev": "rimraf ./dist && bun build ./src/**/*.ts --outdir script --target browser --sourcemap --packages external --format esm && cp LeafletStyleSheet.css script/LeafletStyleSheet.css"
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "bunx --bun vite ",
+    "example": "bun run build:example",
+    "test": "bun test",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^5.1.4",
+    "leaflet": "^1.9.4",
+    "rbush": "^4.0.1",
+    "vite": "^5.4.8"
+  },
   "devDependencies": {
-    "grunt": "^1.0.1",
-    "grunt-contrib-clean": "~1.1.0",
-    "grunt-contrib-copy": "~1.0.0",
-    "grunt-contrib-uglify": "~3.0.1",
-    "grunt-exec": "^2.0.0",
-    "grunt-ts": "~6.0.0-beta.16",
-    "load-grunt-tasks": "~3.5.2",
-    "spacejam": "^1.1.1",
-    "time-grunt": "~1.4.0",
-    "typescript": "^2.4.1"
+    "@happy-dom/global-registrator": "^15.7.4",
+    "@types/leaflet": "^1.9.12",
+    "@types/rbush": "^4.0.0",
+    "bun-types": "^0.1.0",
+    "chokidar": "^4.0.1",
+    "hono": "^4.6.4",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.6.3"
   }
 }
