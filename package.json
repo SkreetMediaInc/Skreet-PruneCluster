@@ -1,8 +1,14 @@
 {
   "name": "@skreet/prune-cluster",
-  "version": "2.1.1",
-  "description": "Fast and realtime marker clustering for Leaflet (modified for Skreet)",
-  "main": "./dist/PruneCluster.js",
+  "version": "1.0.0",
+  "main": "./dist/prune-cluster.iife.js",
+  "module": "./dist/prune-cluster.umd.js",
+  "exports": {
+    ".": {
+      "import": "./dist/prune-cluster.es.js",
+      "require": "./dist/prune-cluster.umd.js"
+    }
+  },
   "scripts-old": {
     "build": "bun run build:dist",
     "dev": "bun run build && bun --hot dev.ts",
@@ -18,10 +24,7 @@
     "dev": "bunx --bun vite ",
     "example": "bun run build:example",
     "test": "bun test",
-    "serve": "vite preview",
-    "build:dist": "rimraf ./dist && bun build --watch ./src/index.ts --outfile dist/skreet-prunecluster.js --minify --target browser --format esm && cp src/LeafletStyleSheet.css dist/LeafletStyleSheet.css",
-    "build:example": "rimraf ./dist && bun build ./src/index.ts --outfile examples/skreet-prunecluster.js --minify --target browser --format esm && cp src/LeafletStyleSheet.css LeafletStyleSheet.css && bun run serve",
-    "build:dev": "rimraf ./dist && bun build ./src/**/*.ts --outdir script --target browser --sourcemap --packages external --format esm && cp LeafletStyleSheet.css script/LeafletStyleSheet.css"
+    "serve": "vite preview"
   },
   "dependencies": {
     "@vitejs/plugin-vue": "^5.1.4",
