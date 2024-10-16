@@ -1,5 +1,5 @@
 {
-  "name": "@wogwon/leaflet-clustering",
+  "name": "@wogwonsociety/leaflet-clustering",
   "version": "1.0.1",
   "description": "Extendable & easy-to-use Leaflet clustering plugin delivering high performance on any data set",
   "main": "./dist/leaflet-clustering.umd.js",
