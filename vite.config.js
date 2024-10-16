@@ -1,7 +1,16 @@
 import {defineConfig} from 'vite';
+import {resolve} from 'path';
 import {terser} from 'rollup-plugin-terser';
+import dts from 'vite-plugin-dts';
 
 export default defineConfig({
+    plugins: [
+        dts({
+            insertTypesEntry: true,
+            outputDir: 'dist',
+            staticImport: true,
+        })
+    ],
     build: {
         rollupOptions: {
             plugins: [
@@ -24,9 +33,9 @@ export default defineConfig({
             },
         },
         lib: {
-            entry: './src/index.ts',  // Adjust to your entry file
+            entry: resolve(__dirname, 'src/index.ts'),  // Adjust to your entry file
             name: 'LeafletClustering',
-            fileName: 'leaflet-clustering',
+            fileName: 'index',
             formats: ['umd', 'iife', 'es'], // UMD and IIFE formats for the browser
         },
         target: 'modules'

@@ -19,11 +19,38 @@ export class PruneClusterLeafletSpiderfier extends L.Layer {
     private _currentCenter?: Position;
     private _clusterMarker?: L.Marker;
 
+    /**
+     * Creates an instance of `PruneClusterLeafletSpiderfier`.
+     *
+     * This constructor initializes the spiderfier with a given cluster adapter. The cluster adapter
+     * is used to manage and interact with the markers on the map. The constructor performs the following actions:
+     *
+     * 1. Calls the parent class constructor using `super()`.
+     * 2. Stores the provided `LeafletAdapter` instance in the `_cluster` property for later use.
+     *
+     * @param cluster - An instance of `LeafletAdapter` that manages the markers on the map.
+     */
     constructor(cluster: LeafletAdapter) {
         super();
         this._cluster = cluster;
     }
 
+    /**
+     * Adds the spiderfier layer to the map and binds event listeners.
+     *
+     * This method is called when the spiderfier layer is added to the map. It performs
+     * the following actions:
+     * 1. Stores the reference to the Leaflet map instance.
+     * 2. Binds the `spiderfy` method to the "overlappingmarkers" event, which is triggered
+     *    when markers overlap and need to be spread out for better visibility.
+     * 3. Binds the `unspiderfy` method to the "click" event, which is triggered when the
+     *    map is clicked, reverting any spiderfied markers back to their original state.
+     * 4. Binds the `unspiderfy` method to the "zoomend" event, which is triggered when the
+     *    map zoom level changes, reverting any spiderfied markers back to their original state.
+     *
+     * @param map - The Leaflet map instance to which the spiderfier layer is being added.
+     * @returns The current instance of `PruneClusterLeafletSpiderfier`.
+     */
     onAdd(map: L.Map): this {
         this._map = map;
         map.on("overlappingmarkers", this.spiderfy.bind(this));
@@ -32,6 +59,17 @@ export class PruneClusterLeafletSpiderfier extends L.Layer {
         return this;
     }
 
+    /**
+     * Removes the spiderfier layer from the map.
+     *
+     * This method is called when the spiderfier layer is removed from the map. It performs
+     * the following actions:
+     * 1. Calls the `unspiderfy` method to revert any spiderfied markers back to their original state.
+     * 2. Unbinds the event listeners for "overlappingmarkers", "click", and "zoomend" events.
+     *
+     * @param map - The Leaflet map instance from which the spiderfier layer is being removed.
+     * @returns The current instance of `PruneClusterLeafletSpiderfier`.
+     */
     onRemove(map: L.Map): this {
         this.unspiderfy();
         map.off("overlappingmarkers", this.spiderfy.bind(this));
@@ -40,6 +78,24 @@ export class PruneClusterLeafletSpiderfier extends L.Layer {
         return this;
     }
 
+    /**
+     * Handles the spiderfying of overlapping markers on the map.
+     *
+     * This method is triggered when markers overlap and need to be spread out
+     * for better visibility. It first unspiderfies any existing spiderfied markers,
+     * then filters the markers to exclude any that are marked as filtered.
+     *
+     * Depending on the number of markers, it generates their positions in either
+     * a spiral or circular pattern around the center point. It then creates Leaflet
+     * markers at these positions, adds them to the map, and animates the lines
+     * connecting the original center to the new positions.
+     *
+     * @param data - The data object containing information about the cluster and markers.
+     * @param data.cluster - The cluster to which the markers belong.
+     * @param data.markers - The array of markers to be spiderfied.
+     * @param data.center - The center position around which the markers will be arranged.
+     * @param data.marker - (Optional) The cluster marker that triggered the spiderfy.
+     */
     spiderfy(data: any): void {
         if (data.cluster !== this._cluster) return;
 
@@ -84,13 +140,33 @@ export class PruneClusterLeafletSpiderfier extends L.Layer {
         }
     }
 
+    /**
+     * Generates an array of points arranged in a circular pattern around a center point.
+     *
+     * This method calculates the positions of markers in a circular layout, which is useful
+     * for visualizing clusters of markers that overlap. The markers are evenly distributed
+     * around the circumference of a circle centered at the given point.
+     *
+     * @param count - The number of points to generate.
+     * @param centerPt - The center point around which the points will be arranged.
+     * @returns An array of `L.Point` objects representing the positions of the markers.
+     */
     private _generatePointsCircle(count: number, centerPt: L.Point): L.Point[] {
+        // Calculate the circumference of the circle based on the number of points and the foot separation
         const circumference = this.spiderfyDistanceMultiplier * this._circleFootSeparation * (2 + count);
+
+        // Calculate the length of each leg (distance from the center to each point)
         const legLength = circumference / this._2PI;
+
+        // Calculate the angle step between each point
         const angleStep = this._2PI / count;
 
+        // Generate the points in a circular pattern
         return Array.from({length: count}, (_, i) => {
+            // Calculate the angle for the current point
             const angle = this._circleStartAngle + i * angleStep;
+
+            // Calculate the x and y coordinates of the point based on the angle and leg length
             return new L.Point(
                 Math.round(centerPt.x + legLength * Math.cos(angle)),
                 Math.round(centerPt.y + legLength * Math.sin(angle))
