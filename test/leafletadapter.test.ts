@@ -3,18 +3,17 @@
 // @ts-ignore
 import {describe, test, beforeEach, expect, afterEach, jest} from "bun:test";
 import {Map, LatLng, LatLngBounds, Point, Marker, Icon, DivIcon, Layer} from "leaflet";
-import PruneClusterForLeaflet from "../src/PruneClusterForLeaflet";
-import ClusterMarker from "../src/ClusterMarker";
+import LeafletAdapter from "../src/LeafletAdapter";
+import VirtualMarker from "../src/VirtualMarker";
 import {Bounds} from "../src/Bounds";
 import {Position} from "../src/Position";
 import {Cluster} from "../src/Cluster";
 
 describe('PruneClusterForLeaflet', () => {
-    let pruneClusterForLeaflet: PruneClusterForLeaflet;
+    let pruneClusterForLeaflet: LeafletAdapter;
     let mockMap: jest.Mocked<Map>;
     const layers = new Set<Layer>();
     const firedEvents: Array<{ eventName: string, payload: any }> = [];
-
 
 
     // Adjustments in the beforeEach setup in tests/PruneClusterForLeaflet.test.ts
@@ -30,7 +29,7 @@ describe('PruneClusterForLeaflet', () => {
             setView: jest.fn(),
             fitBounds: jest.fn(),
             fire: jest.fn((eventName: string, payload: any) => {
-                firedEvents.push({ eventName, payload });
+                firedEvents.push({eventName, payload});
             }),
             removeLayer: jest.fn((layer: Layer) => layers.delete(layer)),
             addLayer: jest.fn((layer: Layer) => layers.add(layer)),
@@ -43,26 +42,26 @@ describe('PruneClusterForLeaflet', () => {
             }),
         } as unknown as jest.Mocked<Map>;
 
-        pruneClusterForLeaflet = new PruneClusterForLeaflet(mockMap);
+        pruneClusterForLeaflet = new LeafletAdapter({});
     });
 
     test('should register a marker', () => {
-        const marker = new ClusterMarker(10, 20);
+        const marker = new VirtualMarker(10, 20);
         pruneClusterForLeaflet.Cluster.RegisterMarker(marker);
         expect(pruneClusterForLeaflet.Cluster.GetMarkers()).toContain(marker);
     });
 
     test('should remove all markers', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneClusterForLeaflet.Cluster.RegisterMarkers([marker1, marker2]);
         pruneClusterForLeaflet.Cluster.RemoveMarkers();
         expect(pruneClusterForLeaflet.Cluster.GetMarkers()).toHaveLength(0);
     });
 
     test('should find markers in area', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneClusterForLeaflet.Cluster.RegisterMarkers([marker1, marker2]);
         const bounds: Bounds = {minLat: 0, maxLat: 50, minLng: 0, maxLng: 50};
         const markersInArea = pruneClusterForLeaflet.Cluster.FindMarkersInArea(bounds);
@@ -71,8 +70,8 @@ describe('PruneClusterForLeaflet', () => {
     });
 
     test('should compute global bounds', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneClusterForLeaflet.Cluster.RegisterMarkers([marker1, marker2]);
         const bounds = pruneClusterForLeaflet.Cluster.ComputeGlobalBounds();
         expect(bounds).toEqual({minLat: 10, maxLat: 30, minLng: 20, maxLng: 40});
@@ -81,7 +80,7 @@ describe('PruneClusterForLeaflet', () => {
     test('should reset clusters', () => {
         pruneClusterForLeaflet.onAdd(mockMap);
 
-        const marker1 = new ClusterMarker(10, 20);
+        const marker1 = new VirtualMarker(10, 20);
         pruneClusterForLeaflet.Cluster.RegisterMarker(marker1);
         pruneClusterForLeaflet.Cluster.ProcessView({minLat: 0, maxLat: 50, minLng: 0, maxLng: 50});
         pruneClusterForLeaflet.Cluster.ResetClusters();
@@ -91,16 +90,16 @@ describe('PruneClusterForLeaflet', () => {
     test('should process view and create clusters', () => {
         pruneClusterForLeaflet.onAdd(mockMap);
 
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneClusterForLeaflet.Cluster.RegisterMarkers([marker1, marker2]);
         const clusters = pruneClusterForLeaflet.Cluster.ProcessView({minLat: 0, maxLat: 50, minLng: 0, maxLng: 50});
         expect(clusters.length).toBeGreaterThan(0);
     });
 
     test('should remove specific markers', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneClusterForLeaflet.Cluster.RegisterMarkers([marker1, marker2]);
         pruneClusterForLeaflet.Cluster.RemoveMarkers([marker1]);
         expect(pruneClusterForLeaflet.Cluster.GetMarkers()).not.toContain(marker1);
@@ -108,8 +107,8 @@ describe('PruneClusterForLeaflet', () => {
     });
 
     test('should find markers bounds in area', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneClusterForLeaflet.Cluster.RegisterMarkers([marker1, marker2]);
         const bounds: Bounds = {minLat: 0, maxLat: 50, minLng: 0, maxLng: 50};
         const markersBounds = pruneClusterForLeaflet.Cluster.FindMarkersBoundsInArea(bounds);
@@ -117,7 +116,7 @@ describe('PruneClusterForLeaflet', () => {
     });
 
     test('should handle markers with filtered flag', () => {
-        const marker1 = new ClusterMarker(10, 20, {}, 0, 1, true); // filtered = true
+        const marker1 = new VirtualMarker(10, 20, {}, 0, 1, true); // filtered = true
         pruneClusterForLeaflet.Cluster.RegisterMarker(marker1);
         const bounds: Bounds = {minLat: 0, maxLat: 50, minLng: 0, maxLng: 50};
         const markersInArea = pruneClusterForLeaflet.Cluster.FindMarkersInArea(bounds);
@@ -125,8 +124,8 @@ describe('PruneClusterForLeaflet', () => {
     });
 
     test('should compute cluster bounds correctly', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneClusterForLeaflet.Cluster.RegisterMarkers([marker1, marker2]);
         const clusterBounds = pruneClusterForLeaflet.Cluster.ComputeBounds([marker1, marker2]);
         expect(clusterBounds).toEqual({minLat: 10, maxLat: 30, minLng: 20, maxLng: 40});
@@ -135,8 +134,8 @@ describe('PruneClusterForLeaflet', () => {
     test('should handle overlapping clusters', () => {
         pruneClusterForLeaflet.onAdd(mockMap);
 
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(10, 20); // Same position as marker1
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(10, 20); // Same position as marker1
         pruneClusterForLeaflet.Cluster.RegisterMarkers([marker1, marker2]);
         const clusters = pruneClusterForLeaflet.Cluster.ProcessView({minLat: 0, maxLat: 50, minLng: 0, maxLng: 50});
         expect(clusters.length).toBe(1); // Both markers should be in one cluster
@@ -144,15 +143,15 @@ describe('PruneClusterForLeaflet', () => {
     });
 
     test('should remove markers by filter', () => {
-        const marker1 = new ClusterMarker(10, 20);
+        const marker1 = new VirtualMarker(10, 20);
         pruneClusterForLeaflet.Cluster.RegisterMarker(marker1);
         pruneClusterForLeaflet.Cluster.RemoveMarkers([marker1]);
         expect(pruneClusterForLeaflet.Cluster.GetMarkers()).not.toContain(marker1);
     });
 
     test('should filter out markers with filtered flag set to true', () => {
-        const marker1 = new ClusterMarker(10, 20, {}, 0, 1, true); // filtered
-        const marker2 = new ClusterMarker(30, 40, {}, 0, 1, false); // not filtered
+        const marker1 = new VirtualMarker(10, 20, {}, 0, 1, true); // filtered
+        const marker2 = new VirtualMarker(30, 40, {}, 0, 1, false); // not filtered
         pruneClusterForLeaflet.Cluster.RegisterMarkers([marker1, marker2]);
         const bounds: Bounds = {minLat: 0, maxLat: 50, minLng: 0, maxLng: 50};
         const markersInArea = pruneClusterForLeaflet.Cluster.FindMarkersInArea(bounds);
@@ -186,20 +185,20 @@ describe('PruneClusterForLeaflet', () => {
     });
 
     test('should build leaflet cluster', () => {
-        const cluster = new Cluster(new ClusterMarker(10, 20));
+        const cluster = new Cluster(new VirtualMarker(10, 20));
         const position = new LatLng(10, 20);
-        const layer = pruneClusterForLeaflet.BuildLeafletCluster(cluster, position);
+        const layer = pruneClusterForLeaflet.BuildLeafletLayer(cluster, position);
         expect(layer).toBeInstanceOf(Marker);
     });
 
     test('should build leaflet cluster icon', () => {
-        const cluster = new Cluster(new ClusterMarker(10, 20));
+        const cluster = new Cluster(new VirtualMarker(10, 20));
         const icon = pruneClusterForLeaflet.BuildLeafletClusterIcon(cluster);
         expect(icon).toBeInstanceOf(DivIcon);
     });
 
     test('should build leaflet marker', () => {
-        const clusterMarker = new ClusterMarker(10, 20);
+        const clusterMarker = new VirtualMarker(10, 20);
         const position = new LatLng(10, 20);
         const leafletMarker = pruneClusterForLeaflet.BuildLeafletMarker(clusterMarker, position);
         expect(leafletMarker).toBeInstanceOf(Marker);
@@ -263,9 +262,9 @@ describe('PruneClusterForLeaflet', () => {
 
 
     test('should build leaflet cluster', () => {
-        const cluster = new Cluster(new ClusterMarker(10, 20));
+        const cluster = new Cluster(new VirtualMarker(10, 20));
         const position = new LatLng(10, 20);
-        const layer = pruneClusterForLeaflet.BuildLeafletCluster(cluster, position);
+        const layer = pruneClusterForLeaflet.BuildLeafletLayer(cluster, position);
         expect(layer).toBeInstanceOf(Marker);
     });
 
@@ -286,8 +285,10 @@ describe('PruneClusterForLeaflet', () => {
         expect(mockMap.removeLayer).toHaveBeenCalledWith(pruneClusterForLeaflet.spiderfier);
     });
 
-    test('should add spiderfier layer on add', () => {
+    test('should add spiderfier layer on add if spider enabled', () => {
+        pruneClusterForLeaflet.spider = true;
         pruneClusterForLeaflet.onAdd(mockMap);
+
         expect(mockMap.addLayer).toHaveBeenCalledWith(pruneClusterForLeaflet.spiderfier);
     });
 
@@ -309,7 +310,7 @@ describe('PruneClusterForLeaflet', () => {
         expect(pruneClusterForLeaflet._moveInProgress).toBe(true);
 
         // Directly invoke the move end handler with hard move flag
-        pruneClusterForLeaflet._moveEnd({ hard: true });
+        pruneClusterForLeaflet._moveEnd({hard: true});
         expect(pruneClusterForLeaflet._moveInProgress).toBe(false);
         expect(pruneClusterForLeaflet._hardMove).toBe(true);
     });
@@ -319,8 +320,8 @@ describe('PruneClusterForLeaflet', () => {
     test('should process view and update objects on map', () => {
         pruneClusterForLeaflet.onAdd(mockMap);
 
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneClusterForLeaflet.Cluster.RegisterMarkers([marker1, marker2]);
 
         pruneClusterForLeaflet.ProcessView();

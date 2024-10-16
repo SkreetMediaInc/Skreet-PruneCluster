@@ -1,6 +1,6 @@
 import {Position} from "./Position";
 
-export interface IClusterObject {
+export interface IMarkerObject {
     position: Position;
     data: any;
     hashCode: number;

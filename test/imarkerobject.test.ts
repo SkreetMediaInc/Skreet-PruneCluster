@@ -1,12 +1,12 @@
 // test/IClusterObject.test.ts
-import { IClusterObject } from '../src/IClusterObject';
+import { IMarkerObject } from '../src/IMarkerObject';
 import { Position } from '../src/Position';
 // @ts-ignore
 import {describe, expect, it} from "bun:test";
 
 describe('IClusterObject', () => {
     it('should conform to IClusterObject structure', () => {
-        const obj: IClusterObject = {
+        const obj: IMarkerObject = {
             position: { lat: 10, lng: 20 },
             data: { name: 'Test' },
             hashCode: 1,

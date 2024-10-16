@@ -1,14 +1,14 @@
 // test/abstractcluster.test.ts
 // @ts-ignore
 import {describe, it, expect, beforeEach, jest} from 'bun:test';
-import { AbstractCluster } from '../src/AbstractCluster';
-import { ClusterMarker } from '../src/ClusterMarker';
+import { AbstractClusterHandler } from '../src/AbstractClusterHandler';
+import { VirtualMarker } from '../src/VirtualMarker';
 import { Bounds } from '../src/Bounds';
 import { Point } from '../src/Point';
 import { Position } from '../src/Position';
 
 describe('AbstractCluster', () => {
-    let cluster: jest.Mocked<AbstractCluster>;
+    let cluster: jest.Mocked<AbstractClusterHandler>;
 
 beforeEach(() => {
     cluster = {
@@ -34,19 +34,19 @@ beforeEach(() => {
         GetPopulation: jest.fn(),
         ResetClusters: jest.fn(),
         SortMarkers: jest.fn()  // Add this line
-    } as unknown as jest.Mocked<AbstractCluster>;
+    } as unknown as jest.Mocked<AbstractClusterHandler>;
 });
 
     it('should register a marker', () => {
-        const marker = new ClusterMarker(0, 0);
+        const marker = new VirtualMarker(0, 0);
         cluster.RegisterMarker(marker);
         expect(cluster.RegisterMarker).toHaveBeenCalledWith(marker);
     });
 
     it('should register multiple markers', () => {
         const markers = [
-            new ClusterMarker(0, 0),
-            new ClusterMarker(1, 1),
+            new VirtualMarker(0, 0),
+            new VirtualMarker(1, 1),
         ];
         cluster.RegisterMarkers(markers);
         expect(cluster.RegisterMarkers).toHaveBeenCalledWith(markers);
@@ -58,7 +58,7 @@ beforeEach(() => {
     });
 
     it('should remove specific markers', () => {
-        const marker1 = new ClusterMarker(0, 0);
+        const marker1 = new VirtualMarker(0, 0);
         cluster.RemoveMarkers([marker1]);
         expect(cluster.RemoveMarkers).toHaveBeenCalledWith([marker1]);
     });

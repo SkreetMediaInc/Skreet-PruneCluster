@@ -1,45 +1,47 @@
 {
-  "name": "@skreet/prune-cluster",
-  "version": "1.0.0",
-  "main": "./dist/prune-cluster.iife.js",
-  "module": "./dist/prune-cluster.umd.js",
+  "name": "@wogwon/leaflet-clustering",
+  "version": "1.0.1",
+  "description": "Extendable & easy-to-use Leaflet clustering plugin delivering high performance on any data set",
+  "main": "./dist/leaflet-clustering.umd.js",
+  "module": "./dist/leaflet-clustering.es.js",
+  "browser": "./dist/leaflet-clustering.iife.js",
   "exports": {
     ".": {
-      "import": "./dist/prune-cluster.es.js",
-      "require": "./dist/prune-cluster.umd.js"
+      "import": "./dist/leaflet-clustering.es.js",
+      "require": "./dist/leaflet-clustering.umd.js",
+      "browser": "./dist/leaflet-clustering.iife.js"
     }
-  },
-  "scripts-old": {
-    "build": "bun run build:dist",
-    "dev": "bun run build && bun --hot dev.ts",
-    "example": "bun run build:example",
-    "test": "bun test",
-    "serve": "bunx serve examples",
-    "build:dist": "rimraf ./dist && bun build --watch ./src/index.ts --outfile dist/skreet-prunecluster.js --minify --target browser --format esm && cp src/LeafletStyleSheet.css dist/LeafletStyleSheet.css",
-    "build:example": "rimraf ./dist && bun build ./src/index.ts --outfile examples/skreet-prunecluster.js --minify --target browser --format esm && cp src/LeafletStyleSheet.css examples/LeafletStyleSheet.css && bun run serve",
-    "build:dev": "rimraf ./dist && bun build ./src/**/*.ts --outdir script --target browser --sourcemap --packages external --format esm && cp LeafletStyleSheet.css script/LeafletStyleSheet.css"
   },
   "scripts": {
     "build": "vite build",
-    "dev": "bunx --bun vite ",
+    "dev": "bunx vite",
     "example": "bun run build:example",
     "test": "bun test",
     "serve": "vite preview"
   },
   "dependencies": {
-    "@vitejs/plugin-vue": "^5.1.4",
     "leaflet": "^1.9.4",
-    "rbush": "^4.0.1",
-    "vite": "^5.4.8"
+    "rollup-plugin-terser": "^7.0.2"
+  },
+  "peerDependencies": {
+    "leaflet": "^1.9.4"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^15.7.4",
     "@types/leaflet": "^1.9.12",
-    "@types/rbush": "^4.0.0",
-    "bun-types": "^0.1.0",
-    "chokidar": "^4.0.1",
-    "hono": "^4.6.4",
-    "rimraf": "^6.0.1",
-    "typescript": "^5.6.3"
+    "@vitejs/plugin-vue": "^5.1.4",
+    "terser": "^5.34.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.8"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=16",
+    "bun": ">=1.0.0"
   }
 }

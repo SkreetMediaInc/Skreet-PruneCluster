@@ -5,7 +5,7 @@ import {expect, it, describe, beforeEach, afterEach, mock, jest} from "bun:test"
 import {checkPositionInsideBounds, ComputeBounds, insertionSort, shouldUseInsertionSort} from '../src/utils';
 import {Position} from '../src/Position';
 import {Bounds} from '../src/Bounds';
-import {IClusterObject} from '../src/IClusterObject';
+import {IMarkerObject} from '../src/IMarkerObject';
 
 describe('utils', () => {
     describe('checkPositionInsideBounds', () => {
@@ -24,7 +24,7 @@ describe('utils', () => {
 
     describe('ComputeBounds', () => {
         it('should compute bounds for a list of markers', () => {
-            const markers: IClusterObject[] = [
+            const markers: IMarkerObject[] = [
                 {
                     position: {lat: 10, lng: 20},
                     filtered: false,
@@ -58,7 +58,7 @@ describe('utils', () => {
         });
 
         it('should ignore filtered markers if withFiltered is false', () => {
-            const markers: IClusterObject[] = [
+            const markers: IMarkerObject[] = [
                 {
                     position: {lat: 10, lng: 20},
                     filtered: true,
@@ -92,7 +92,7 @@ describe('utils', () => {
         });
 
         it('should return null for an empty list', () => {
-            const markers: IClusterObject[] = [];
+            const markers: IMarkerObject[] = [];
             const bounds = ComputeBounds(markers);
             expect(bounds).toBeNull();
         });
@@ -100,7 +100,7 @@ describe('utils', () => {
 
     describe('insertionSort', () => {
         it('should sort a list of markers by longitude', () => {
-            const markers: IClusterObject[] = [
+            const markers: IMarkerObject[] = [
                 {
                     position: {lat: 10, lng: 30},
                     filtered: false,

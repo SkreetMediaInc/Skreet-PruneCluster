@@ -1,10 +1,10 @@
 
-export {AbstractCluster} from './AbstractCluster';
+export {AbstractClusterHandler} from './AbstractClusterHandler.ts';
 export {type Bounds} from './Bounds';
 export {Cluster} from './Cluster';
-export {ClusterMarker} from './ClusterMarker';
-export {type ICluster} from './ICluster';
-export {type IClusterObject} from './IClusterObject';
+export {VirtualMarker} from './VirtualMarker.ts';
+export {type IClusterHandler} from './IClusterHandler.ts';
+export {type IMarkerObject} from './IMarkerObject.ts';
 export {HashCodeCounter, MaxHashCodeValue} from './HashCodeCounter';
 export {type HasPosition} from './HasPosition';
 export {type Point} from './Point';
@@ -13,4 +13,4 @@ export {insertionSort, shouldUseInsertionSort, checkPositionInsideBounds, Comput
 export {type LeafletMarker} from './LeafletMarker';
 export {PruneClusterLeafletSpiderfier} from "./LeafletSpiderfier";
 export {PruneCluster} from './PruneCluster';
-export {PruneClusterForLeaflet} from './PruneClusterForLeaflet';
+export {LeafletAdapter} from './LeafletAdapter.ts';

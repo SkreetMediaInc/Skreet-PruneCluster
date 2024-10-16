@@ -1,15 +1,15 @@
 // test/ClusterMarker.test.ts
-import ClusterMarker from '../src/ClusterMarker';
+import VirtualMarker from '../src/VirtualMarker';
 import { Position } from '../src/Position';
 import { HashCodeCounter } from '../src/HashCodeCounter';
 // @ts-ignore
 import {beforeEach, describe, expect, it} from "bun:test";
 
 describe('ClusterMarker', () => {
-    let marker: ClusterMarker;
+    let marker: VirtualMarker;
 
     beforeEach(() => {
-        marker = new ClusterMarker(10, 20, { name: 'Test' }, 1, 2, false);
+        marker = new VirtualMarker(10, 20, { name: 'Test' }, 1, 2, false);
     });
 
     it('should initialize correctly', () => {
@@ -21,8 +21,8 @@ describe('ClusterMarker', () => {
     });
 
     it('should generate a unique hash code on initialization', () => {
-        const firstMarker = new ClusterMarker(0, 0);
-        const secondMarker = new ClusterMarker(0, 0);
+        const firstMarker = new VirtualMarker(0, 0);
+        const secondMarker = new VirtualMarker(0, 0);
         expect(firstMarker.hashCode).not.toBe(secondMarker.hashCode);
     });
 

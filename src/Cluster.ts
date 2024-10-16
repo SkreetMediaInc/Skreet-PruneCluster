@@ -1,11 +1,11 @@
 import {MaxHashCodeValue} from "./HashCodeCounter";
-import ClusterMarker from "./ClusterMarker";
+import VirtualMarker from "./VirtualMarker.ts";
 import {Bounds} from "./Bounds";
 import {Position} from "./Position";
 import {PruneCluster} from "./PruneCluster";
-import {IClusterObject} from "./IClusterObject";
+import {IMarkerObject} from "./IMarkerObject.ts";
 
-export class Cluster implements IClusterObject {
+export class Cluster implements IMarkerObject {
     // Cluster area
     public bounds: Bounds = {minLat: 0, maxLat: 0, minLng: 0, maxLng: 0};
 
@@ -39,7 +39,7 @@ export class Cluster implements IClusterObject {
     // The last marker added in the cluster
     // Usefull when the cluster contains only one marker
 
-    public lastMarker!: ClusterMarker;
+    public lastMarker!: VirtualMarker;
 
     // If enabled, the cluster contains a list of his marker
     // It implies a performance cost, but you can use it
@@ -47,13 +47,13 @@ export class Cluster implements IClusterObject {
     public static ENABLE_MARKERS_LIST: boolean = false;
 
     // The list of markers in the cluster
-    private _clusterMarkers!: ClusterMarker[];
+    private _clusterMarkers!: VirtualMarker[];
     markers: any;
 
     // @ts-ignore
 
 
-    constructor(marker?: ClusterMarker) {
+    constructor(marker?: VirtualMarker) {
         this.stats = [0, 0, 0, 0, 0, 0, 0, 0];
         this.data = {};
 
@@ -95,7 +95,7 @@ export class Cluster implements IClusterObject {
         };
     }
 
-    public AddMarker(marker: ClusterMarker) {
+    public AddMarker(marker: VirtualMarker) {
 
         if (Cluster.ENABLE_MARKERS_LIST) {
             this._clusterMarkers.push(marker);

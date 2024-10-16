@@ -1,8 +1,8 @@
 import HashCodeCounter from "./HashCodeCounter";
 import {Position} from "./Position";
-import {IClusterObject} from "./IClusterObject";
+import {IMarkerObject} from "./IMarkerObject.ts";
 
-export class ClusterMarker implements IClusterObject {
+export class VirtualMarker implements IMarkerObject {
 
     // The category of the Marker, ideally a number between 0 and 7
     // can also be a string
@@ -49,5 +49,5 @@ export class ClusterMarker implements IClusterObject {
 
 }
 
-export default ClusterMarker;
+export default VirtualMarker;
 

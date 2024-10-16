@@ -3,7 +3,7 @@
 // @ts-ignore
 import {describe, test, beforeEach, expect, mock} from "bun:test";
 import {PruneCluster} from "../src/PruneCluster";
-import ClusterMarker from "../src/ClusterMarker";
+import VirtualMarker from "../src/VirtualMarker";
 import {Bounds} from "../src/Bounds";
 
 
@@ -17,22 +17,22 @@ describe('PruneCluster', () => {
     });
 
     test('should register a marker', () => {
-        const marker = new ClusterMarker(10, 20);
+        const marker = new VirtualMarker(10, 20);
         pruneCluster.RegisterMarker(marker);
         expect(pruneCluster.GetMarkers()).toContain(marker);
     });
 
     test('should remove all markers', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneCluster.RegisterMarkers([marker1, marker2]);
         pruneCluster.RemoveMarkers();
         expect(pruneCluster.GetMarkers()).toHaveLength(0);
     });
 
     test('should find markers in area', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneCluster.RegisterMarkers([marker1, marker2]);
         const bounds: Bounds = {minLat: 0, maxLat: 50, minLng: 0, maxLng: 50};
         const markersInArea = pruneCluster.FindMarkersInArea(bounds);
@@ -41,15 +41,15 @@ describe('PruneCluster', () => {
     });
 
     test('should compute global bounds', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneCluster.RegisterMarkers([marker1, marker2]);
         const bounds = pruneCluster.ComputeGlobalBounds();
         expect(bounds).toEqual({minLat: 10, maxLat: 30, minLng: 20, maxLng: 40});
     });
 
     test('should reset clusters', () => {
-        const marker1 = new ClusterMarker(10, 20);
+        const marker1 = new VirtualMarker(10, 20);
         pruneCluster.RegisterMarker(marker1);
         pruneCluster.ProcessView({minLat: 0, maxLat: 50, minLng: 0, maxLng: 50});
         pruneCluster.ResetClusters();
@@ -57,16 +57,16 @@ describe('PruneCluster', () => {
     });
 
     test('should process view and create clusters', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneCluster.RegisterMarkers([marker1, marker2]);
         const clusters = pruneCluster.ProcessView({minLat: 0, maxLat: 50, minLng: 0, maxLng: 50});
         expect(clusters.length).toBeGreaterThan(0);
     });
 
     test('should remove specific markers', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneCluster.RegisterMarkers([marker1, marker2]);
         pruneCluster.RemoveMarkers([marker1]);
         expect(pruneCluster.GetMarkers()).not.toContain(marker1);
@@ -74,8 +74,8 @@ describe('PruneCluster', () => {
     });
 
     test('should find markers bounds in area', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneCluster.RegisterMarkers([marker1, marker2]);
         const bounds: Bounds = {minLat: 0, maxLat: 50, minLng: 0, maxLng: 50};
         const markersBounds = pruneCluster.FindMarkersBoundsInArea(bounds);
@@ -88,8 +88,8 @@ describe('PruneCluster', () => {
     });
 
     test('should handle markers with filtered flag in ComputeBounds', () => {
-        const marker1 = new ClusterMarker(10, 20, {}, 0, 1, true);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20, {}, 0, 1, true);
+        const marker2 = new VirtualMarker(30, 40);
         pruneCluster.RegisterMarkers([marker1, marker2]);
         const bounds = pruneCluster.ComputeBounds(pruneCluster.GetMarkers(), false);
         expect(bounds).toEqual({minLat: 30, maxLat: 30, minLng: 40, maxLng: 40});
@@ -97,8 +97,8 @@ describe('PruneCluster', () => {
 
 
     test('should handle markers with different categories', () => {
-        const marker1 = new ClusterMarker(10, 20, {}, 1); // category 1
-        const marker2 = new ClusterMarker(30, 40, {}, 2); // category 2
+        const marker1 = new VirtualMarker(10, 20, {}, 1); // category 1
+        const marker2 = new VirtualMarker(30, 40, {}, 2); // category 2
         pruneCluster.RegisterMarkers([marker1, marker2]);
         const clusters = pruneCluster.ProcessView({minLat: 0, maxLat: 50, minLng: 0, maxLng: 50});
         expect(clusters.length).toBe(2); // Two separate clusters
@@ -108,8 +108,8 @@ describe('PruneCluster', () => {
 
 
     test('should handle markers with different weights', () => {
-        const marker1 = new ClusterMarker(10, 20, {}, 0, 2); // weight: 2
-        const marker2 = new ClusterMarker(30, 40, {}, 0, 3); // weight: 3
+        const marker1 = new VirtualMarker(10, 20, {}, 0, 2); // weight: 2
+        const marker2 = new VirtualMarker(30, 40, {}, 0, 3); // weight: 3
         pruneCluster.RegisterMarkers([marker1, marker2]);
         const clusters = pruneCluster.ProcessView({minLat: 0, maxLat: 50, minLng: 0, maxLng: 50});
         expect(clusters.length).toBe(2); // Two clusters, one for each marker
@@ -119,8 +119,8 @@ describe('PruneCluster', () => {
 
 
     test('should handle markers with the same position', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(10, 20); // Same position as marker1
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(10, 20); // Same position as marker1
         pruneCluster.RegisterMarkers([marker1, marker2]);
         const clusters = pruneCluster.ProcessView({ minLat: 0, maxLat: 50, minLng: 0, maxLng: 50 });
 
@@ -129,7 +129,7 @@ describe('PruneCluster', () => {
         expect(clusters[0].population).toBe(2); // Population of the cluster should be 2
     });
     test('should handle markers with forceIconRedraw flag', () => {
-        const marker1 = new ClusterMarker(10, 20);
+        const marker1 = new VirtualMarker(10, 20);
         marker1.data.forceIconRedraw = true;
         pruneCluster.RegisterMarker(marker1);
         pruneCluster.ProcessView({minLat: 0, maxLat: 50, minLng: 0, maxLng: 50});
@@ -137,14 +137,14 @@ describe('PruneCluster', () => {
     });
 
     test('should handle markers with custom data', () => {
-        const marker1 = new ClusterMarker(10, 20, {name: 'Marker 1'});
+        const marker1 = new VirtualMarker(10, 20, {name: 'Marker 1'});
         pruneCluster.RegisterMarker(marker1);
         const markers = pruneCluster.GetMarkers();
         expect(markers[0].data.name).toBe('Marker 1');
     });
 
     test('should handle markers with custom icon and popup', () => {
-        const marker1 = new ClusterMarker(10, 20);
+        const marker1 = new VirtualMarker(10, 20);
         marker1.data.icon = 'custom-icon';
         marker1.data.popup = 'custom-popup';
         pruneCluster.RegisterMarker(marker1);
@@ -155,7 +155,7 @@ describe('PruneCluster', () => {
 
 
     test('should handle markers with filtered flag', () => {
-        const marker1 = new ClusterMarker(10, 20, {}, 0, 1, true); // filtered = true
+        const marker1 = new VirtualMarker(10, 20, {}, 0, 1, true); // filtered = true
         pruneCluster.RegisterMarker(marker1);
         const bounds: Bounds = {minLat: 0, maxLat: 50, minLng: 0, maxLng: 50};
         const markersInArea = pruneCluster.FindMarkersInArea(bounds);
@@ -166,16 +166,16 @@ describe('PruneCluster', () => {
 
 
     test('should compute cluster bounds correctly', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneCluster.RegisterMarkers([marker1, marker2]);
         const clusterBounds = pruneCluster.ComputeBounds([marker1, marker2]);
         expect(clusterBounds).toEqual({minLat: 10, maxLat: 30, minLng: 20, maxLng: 40});
     });
 
     test('should handle overlapping clusters', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(10, 20); // Same position as marker1
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(10, 20); // Same position as marker1
         pruneCluster.RegisterMarkers([marker1, marker2]);
         const clusters = pruneCluster.ProcessView({minLat: 0, maxLat: 50, minLng: 0, maxLng: 50});
         expect(clusters.length).toBe(1); // Both markers should be in one cluster
@@ -184,7 +184,7 @@ describe('PruneCluster', () => {
 
 
     test('should remove markers by filter', () => {
-        const marker1 = new ClusterMarker(10, 20);
+        const marker1 = new VirtualMarker(10, 20);
         pruneCluster.RegisterMarker(marker1);
         pruneCluster.RemoveMarkers([marker1]);
         expect(pruneCluster.GetMarkers()).not.toContain(marker1);
@@ -192,7 +192,7 @@ describe('PruneCluster', () => {
 
     test('should use native sort when nbChanges exceeds 300', () => {
         for (let i = 0; i < 350; i++) {
-            const marker = new ClusterMarker(i, i);
+            const marker = new VirtualMarker(i, i);
             pruneCluster.RegisterMarker(marker);
         }
         pruneCluster.ProcessView({minLat: 0, maxLat: 500, minLng: 0, maxLng: 500});
@@ -201,7 +201,7 @@ describe('PruneCluster', () => {
 
     test('should use insertion sort when changes are less than 300', () => {
         for (let i = 0; i < 150; i++) {
-            const marker = new ClusterMarker(i, i);
+            const marker = new VirtualMarker(i, i);
             pruneCluster.RegisterMarker(marker);
         }
         pruneCluster.ProcessView({minLat: 0, maxLat: 200, minLng: 0, maxLng: 200});
@@ -209,8 +209,8 @@ describe('PruneCluster', () => {
     });
 
     test('should compute bounds for clusters at the edge of view', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(50, 60);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(50, 60);
         pruneCluster.RegisterMarkers([marker1, marker2]);
 
         const bounds: Bounds = {minLat: 0, maxLat: 50, minLng: 0, maxLng: 50};
@@ -223,8 +223,8 @@ describe('PruneCluster', () => {
     });
 
     test('should remove markers with _removeFlag', () => {
-        const marker1 = new ClusterMarker(10, 20);
-        const marker2 = new ClusterMarker(30, 40);
+        const marker1 = new VirtualMarker(10, 20);
+        const marker2 = new VirtualMarker(30, 40);
         pruneCluster.RegisterMarkers([marker1, marker2]);
 
         marker1["_removeFlag"] = true;
@@ -234,8 +234,8 @@ describe('PruneCluster', () => {
     });
 
     test('should filter out markers with filtered flag set to true', () => {
-        const marker1 = new ClusterMarker(10, 20, {}, 0, 1, true); // filtered
-        const marker2 = new ClusterMarker(30, 40, {}, 0, 1, false); // not filtered
+        const marker1 = new VirtualMarker(10, 20, {}, 0, 1, true); // filtered
+        const marker2 = new VirtualMarker(30, 40, {}, 0, 1, false); // not filtered
         pruneCluster.RegisterMarkers([marker1, marker2]);
 
         const bounds: Bounds = {minLat: 0, maxLat: 50, minLng: 0, maxLng: 50};

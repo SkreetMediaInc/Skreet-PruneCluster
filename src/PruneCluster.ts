@@ -1,15 +1,15 @@
 // src/PruneCluster.ts
-import AbstractCluster from "./AbstractCluster";
-import ClusterMarker from "./ClusterMarker";
+import AbstractClusterHandler from "./AbstractClusterHandler.ts";
+import VirtualMarker from "./VirtualMarker.ts";
 import {Cluster} from "./Cluster";
 import {Bounds} from "./Bounds";
 import {checkPositionInsideBounds, ComputeBounds} from "./utils";
 import {Position} from "./Position";
 import {Point} from "./Point";
 
-export class PruneCluster extends AbstractCluster {
+export class PruneCluster extends AbstractClusterHandler {
 
-    public RegisterMarker(marker: ClusterMarker): void {
+    public RegisterMarker(marker: VirtualMarker): void {
         if ((<any>marker)._removeFlag) {
             delete (<any>marker)._removeFlag;
         }
@@ -17,11 +17,11 @@ export class PruneCluster extends AbstractCluster {
         this._nbChanges += 1;
     }
 
-    public RegisterMarkers(markers: ClusterMarker[]): void {
+    public RegisterMarkers(markers: VirtualMarker[]): void {
         markers.forEach(marker => this.RegisterMarker(marker));
     }
 
-    public RemoveMarkers(markers?: ClusterMarker[]): void {
+    public RemoveMarkers(markers?: VirtualMarker[]): void {
         if (!markers) {
             this._markers = [];
             return;
@@ -81,11 +81,11 @@ export class PruneCluster extends AbstractCluster {
         return this._clusters;
     }
 
-    public FindMarkersInArea(area: Bounds): ClusterMarker[] {
+    public FindMarkersInArea(area: Bounds): VirtualMarker[] {
         return this._markers.filter(marker => !marker.filtered && checkPositionInsideBounds(marker.position, area));
     }
 
-    public ComputeBounds(markers: ClusterMarker[], withFiltered: boolean = true): Bounds | null {
+    public ComputeBounds(markers: VirtualMarker[], withFiltered: boolean = true): Bounds | null {
         return ComputeBounds(markers, withFiltered);
     }
 
@@ -97,7 +97,7 @@ export class PruneCluster extends AbstractCluster {
         return this.ComputeBounds(this._markers, withFiltered);
     }
 
-    public GetMarkers(): ClusterMarker[] {
+    public GetMarkers(): VirtualMarker[] {
         return this._markers;
     }
 
