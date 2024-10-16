@@ -1,21 +1,21 @@
 // tests/Cluster.test.ts
 import { Cluster } from '../src/Cluster';
-import ClusterMarker from '../src/ClusterMarker';
+import VirtualMarker from '../src/VirtualMarker';
 // @ts-ignore
 import { describe, expect, it, beforeEach } from "bun:test";
 
 describe('Cluster', () => {
     let cluster: Cluster;
-    let marker: ClusterMarker;
+    let marker: VirtualMarker;
 
     beforeEach(() => {
-        marker = new ClusterMarker(10, 20);
+        marker = new VirtualMarker(10, 20);
         cluster = new Cluster(marker);
     });
 
     // Covers lines 146-155: AddMarker Method
     it('should add a marker and update cluster properties', () => {
-        const newMarker = new ClusterMarker(15, 25);
+        const newMarker = new VirtualMarker(15, 25);
         cluster.AddMarker(newMarker);
 
         expect(cluster.population).toBe(2);
@@ -35,7 +35,7 @@ describe('Cluster', () => {
         expect(cluster.GetClusterMarkers()).toEqual([]);
     });
     it('should apply another cluster and merge properties', () => {
-        const newCluster = new Cluster(new ClusterMarker(30, 40));
+        const newCluster = new Cluster(new VirtualMarker(30, 40));
         newCluster.population = 3;
         newCluster.totalWeight = 5;
         newCluster.averagePosition = { lat: 25, lng: 35 };

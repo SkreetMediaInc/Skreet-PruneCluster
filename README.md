@@ -1,39 +1,22 @@
-![PruneCluster](https://sintef-9012.github.io/PruneCluster/logo.png)
+![Leaflet Clustering](https://sintef-9012.github.io/PruneCluster/logo.png)
 ============
 
-PruneCluster is a fast and realtime marker clustering library.
 
-*Example 1:* [150 000 randomly moving markers](http://sintef-9012.github.io/PruneCluster/examples/random.150000.html).
+While upgrading the original codebase an abstraction was created & the library was restructured to allow for easier integration with other libraries. This library is now a full clustering library that can be used with other geospatial algorithms.
 
-![](https://sintef-9012.github.io/PruneCluster/twittermap.jpg)
-*Example 2: Realtime clusters of tweets.*
-
-It's working with [Leaflet](http://leafletjs.com/) as an alternative to [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster).
-
+*Example 1:* [150 000 randomly moving markers](https://github.com/WogwonSociety/leaflet-clustering/blob/master/index.html).
  
 *The library is designed for large datasets or live situations.* The memory consumption is kept low and the library is fast on mobile devices, thanks to a new algorithm inspired by collision detection in physical engines.
 
+### 🔧 This readme is under heavy reconstruction to match our updated syntax
 
 
-### Features
+TODO:
+- Simplify the weight system
+- Simplify the category system
+- 
 
-#### Realtime
-The clusters can be updated in realtime. It's perfect for live datasets or datasets you want to filter at runtime.
-
-#### Fast
-
-Number of markers|First step|Update (low zoom level)|Update (high zoom level)
----------|------------------|------------------------|------------------
-[100](http://sintef-9012.github.io/PruneCluster/examples/random.100.html)|instant|instant|instant
-[1 000](http://sintef-9012.github.io/PruneCluster/examples/random.1000.html)|instant|instant|instant
-[10 000](http://sintef-9012.github.io/PruneCluster/examples/random.10000.html)|14ms|3ms|2ms
-[60 000](http://sintef-9012.github.io/PruneCluster/examples/random.60000.html)|70ms|23ms|9ms
-[150 000](http://sintef-9012.github.io/PruneCluster/examples/random.150000.html)|220ms|60ms|20ms
-[1 000 000](http://sintef-9012.github.io/PruneCluster/examples/random.1000000.html)|1.9s|400ms|135ms
-
-These values are tested with random positions, on a recent laptop, using Chrome 38. One half of markers is moving randomly and the other half is static. It is also fast enough for mobile devices.
-
-If you prefer real world data, the [50k Leaflet.markercluster example](http://sintef-9012.github.io/PruneCluster/examples/realworld.50000.html) is computed in 60ms *([original](http://sintef-9012.github.io/Leaflet.markercluster/example/marker-clustering-realworld.50000.html))*.
+=================================
 
 #### Weight
 You can specify the weight of each marker.
@@ -56,46 +39,121 @@ The markers can be filtered easily with no performance cost.
 
 ### Usage
 
-#### Classic Way
+#### Using IIFE module
 ```html
-	<!-- In <head> -->
-	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
-  integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
-  crossorigin=""/>
 
-	<!-- In <head> or before </body> -->
-	<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
-  integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
-  crossorigin=""></script>
-	<script src="PruneCluster/dist/PruneCluster.js"></script>
+<!--Include leaflet-->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+
+<!--Include leaflet-clustering-->
+    <script src="dist/leaflet-clustering.mjs"></script>
+
+<!--In Body -->
+
+<!-- Leaflet map object -->
+<div id="map"></div> 
+
+<script>
+    let LeafletAdapter = LeafletClustering.LeafletAdapter;
+    let ClusterMarker = LeafletClustering.ClusterMarker;
+    
+//     On document loaded, for example
+    document.addEventListener('DOMContentLoaded',(event)=>{
+        // Setup your map object 
+        const map = L.map("map", {
+            attributionControl: false,
+            zoomControl: false
+        }).setView(new L.LatLng(59.911111, 10.752778), 8);
+
+        // Add a tile layer
+        L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            detectRetina: true,
+            maxNativeZoom: 17
+        }).addTo(map);
+
+        // Initialize your implementation. e.g: LeafletAdapter
+        const leafletView = new LeafletAdapter();
+        leafletView.onAdd(map);
+        console.log('LeafletAdapter Loaded & added to map');
+        const size = 150000;
+        const markers = []; //Array of ClusterMarker
+
+        console.log('Adding Markers');
+        for (let i = 0; i < size; ++i) {
+            const marker = new ClusterMarker(
+                    59.91111 + (Math.random() - 0.5) * Math.random() * 0.00001 * size,
+                    10.752778 + (Math.random() - 0.5) * Math.random() * 0.00002 * size
+            );
+
+            // Local storage for markers here.
+            markers.push(marker);
+            
+            // Handle your markers registration through our layer now.
+            leafletView.RegisterMarker(marker);
+        }
+
+        console.log(`Added ${size} Markers to map.`);
+        console.log('Processing View');
+        
+        //When anything changes, process the view here.
+        leafletView.ProcessView();
+        
+        // Interval assigned to simulate moving markers to show for the example
+        window.setInterval(() => {
+            for (let i = 0; i < size / 2; ++i) {
+                const coef = i < size / 8 ? 10 : 1;
+                markers[i].position = {
+                    ...markers[i].position,
+                    lat: markers[i].position.lat + (Math.random() - 0.5) * 0.00001 * coef,
+                    lng: markers[i].position.lng + (Math.random() - 0.5) * 0.00002 * coef
+                };
+                // const ll = markers[i].position;
+                // ll.lat += (Math.random() - 0.5) * 0.00001 * coef;
+                // ll.lng += (Math.random() - 0.5) * 0.00002 * coef;
+            }
+
+            leafletView.ProcessView();
+        }, 3000);
+    });
+
+
+</script>
 ```
 
-#### Webpack & NPM
+#### NPM (BUN)
 
-`npm install exports-loader prunecluster`
+`bun add @wogwonsociety/leaflet-clustering`
 
 ```javascript
-import { PruneCluster, PruneClusterForLeaflet } from 'exports-loader?PruneCluster,PruneClusterForLeaflet!prunecluster/dist/PruneCluster.js'
+import { PruneCluster, LeafletAdapter } from '@wogwon/leaflet-clustering';
 
 ```
 
 #### Example
 
 ```javascript
-var pruneCluster = new PruneClusterForLeaflet();
+// Prune cluster
+var pruneCluster = new LeafletAdapter();
+
+// Provide a custom clusterHandler
+// var adapter = new LeafletAdapter({clusterHandler: new CustomClusterHandler()});
 
 ...
-var marker = new PruneCluster.Marker(59.8717, 11.1909);
+var marker = new VirtualMarker(59.8717, 11.1909);
 pruneCluster.RegisterMarker(marker);
 ...
 
 leafletMap.addLayer(pruneCluster);
 ```
 
-### PruneClusterForLeaflet constructor
+### LeafletAdapter constructor
 
 ```javascript
-PruneClusterForLeaflet([size](#set-the-clustering-size), margin);
+LeafletAdapter([size](#set - the - clustering - size), margin);
 ```
 
 You can specify the size and margin which affect when your clusters and markers will be merged.
@@ -284,6 +342,9 @@ pruneCluster.RedrawIcons();
 ### Acknowledgements
 
 This library was developed in context of the BRIDGE project. It is now supported by the community and we thank [the contributors](https://github.com/SINTEF-9012/PruneCluster/graphs/contributors).
+
+Originally a fork of [PruneCluster](https://github.com/SINTEF-9012/PruneCluster), this library provides an alternative to the default leaflet marker clustering using a 'sweep & prune' algorithm.
+
 
 ### Licence
 

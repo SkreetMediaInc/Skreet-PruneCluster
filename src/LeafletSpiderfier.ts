@@ -1,4 +1,4 @@
-import PruneClusterForLeaflet from "./PruneClusterForLeaflet";
+import LeafletAdapter from "./LeafletAdapter.ts";
 import * as L from "leaflet";
 import {Position} from "./Position";
 
@@ -13,13 +13,13 @@ export class PruneClusterLeafletSpiderfier extends L.Layer {
 
     public spiderfyDistanceMultiplier = 1;
 
-    private _cluster: PruneClusterForLeaflet;
+    private _cluster: LeafletAdapter;
     private _currentMarkers: L.Marker[] = [];
     private _lines = L.polyline([], {weight: 1.5, color: "#222"});
     private _currentCenter?: Position;
     private _clusterMarker?: L.Marker;
 
-    constructor(cluster: PruneClusterForLeaflet) {
+    constructor(cluster: LeafletAdapter) {
         super();
         this._cluster = cluster;
     }

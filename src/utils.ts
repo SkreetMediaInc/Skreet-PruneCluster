@@ -1,6 +1,6 @@
 import {Position} from "./Position";
 import {Bounds} from "./Bounds";
-import {IClusterObject} from "./IClusterObject";
+import {IMarkerObject} from "./IMarkerObject.ts";
 import {HasPosition} from "./HasPosition";
 
 
@@ -9,14 +9,14 @@ export function checkPositionInsideBounds(a: Position, b: Bounds): boolean {
         a.lng >= b.minLng && a.lng <= b.maxLng;
 }
 
-export function ComputeBounds(markers: IClusterObject[], withFiltered: boolean = true): Bounds | null {
+export function ComputeBounds(markers: IMarkerObject[], withFiltered: boolean = true): Bounds | null {
     return computeBoundsFromList(markers, (marker) => marker.position, withFiltered);
 }
 
-export function insertionSort(list: IClusterObject[]) {
+export function insertionSort(list: IMarkerObject[]) {
     for (let i: number = 1,
              j: number,
-             tmp: IClusterObject,
+             tmp: IMarkerObject,
              tmpLng: number,
              length = list.length; i < length; ++i) {
         tmp = list[i];

@@ -7,7 +7,7 @@ const app = new Hono();
 const PORT = 3000;
 
 // Serve static files from the 'examples' directory
-app.get('/*', serveStatic({ root: './examples' }));
+app.get('/*', serveStatic({ root: './' }));
 
 // Track if a build is already running to avoid overlapping builds
 let isBuilding = false;

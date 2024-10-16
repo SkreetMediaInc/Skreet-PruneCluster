@@ -2,23 +2,23 @@ import {Point} from "./Point";
 import {Position} from "./Position";
 import {Bounds} from "./Bounds";
 import {Cluster} from "./Cluster";
-import {IClusterObject} from "./IClusterObject";
+import {IMarkerObject} from "./IMarkerObject.ts";
 
-export interface ICluster {
+export interface IClusterHandler {
     Size: number;
     ViewPadding: number;
     Project: (lat: number, lng: number) => Point;
     UnProject: (x: number, y: number) => Position;
 
-    RegisterMarker(marker: IClusterObject): void;
+    RegisterMarker(marker: IMarkerObject): void;
 
-    RegisterMarkers(markers: IClusterObject[]): void;
+    RegisterMarkers(markers: IMarkerObject[]): void;
 
-    RemoveMarkers(markers?: IClusterObject[]): void;
+    RemoveMarkers(markers?: IMarkerObject[]): void;
 
     ProcessView(bounds: Bounds): Cluster[];
 
-    FindMarkersInArea(area: Bounds): IClusterObject[];
+    FindMarkersInArea(area: Bounds): IMarkerObject[];
 
     // ComputeBounds(markers?: IClusterObject[], withFiltered?: boolean, cluster?: Cluster): Bounds | null;
 
@@ -26,7 +26,7 @@ export interface ICluster {
 
     ComputeGlobalBounds(withFiltered?: boolean): Bounds | null;
 
-    GetMarkers(): IClusterObject[];
+    GetMarkers(): IMarkerObject[];
 
     GetPopulation(): number;
 

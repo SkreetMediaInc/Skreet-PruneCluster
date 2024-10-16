@@ -1,39 +1,39 @@
 // src/AbstractPruneCluster.ts
-import {ClusterMarker} from "./ClusterMarker";
+import {VirtualMarker} from "./VirtualMarker.ts";
 import {Cluster} from "./Cluster";
 import {insertionSort} from "./utils";
-import {ICluster} from "./ICluster";
+import {IClusterHandler} from "./IClusterHandler.ts";
 import {Point} from "./Point";
 import {Position} from "./Position";
 import {Bounds} from "./Bounds";
 
-export abstract class AbstractCluster implements ICluster {
+export abstract class AbstractClusterHandler implements IClusterHandler {
 
     Project!: (lat: number, lng: number) => Point;
     UnProject!: (x: number, y: number) => Position;
     public Size: number = 166;
     public ViewPadding: number = 0.2;
 
-    public _markers: ClusterMarker[] = [];
+    public _markers: VirtualMarker[] = [];
     public _clusters: Cluster[] = [];
     public _nbChanges: number = 0;
     private position?: Position;
 
-    public abstract RegisterMarker(marker: ClusterMarker): void;
+    public abstract RegisterMarker(marker: VirtualMarker): void;
 
-    public abstract RegisterMarkers(markers: ClusterMarker[]): void;
+    public abstract RegisterMarkers(markers: VirtualMarker[]): void;
 
-    public abstract RemoveMarkers(markers?: ClusterMarker[]): void;
+    public abstract RemoveMarkers(markers?: VirtualMarker[]): void;
 
     public abstract ProcessView(bounds: Bounds): Cluster[];
 
-    public abstract FindMarkersInArea(area: Bounds): ClusterMarker[];
+    public abstract FindMarkersInArea(area: Bounds): VirtualMarker[];
 
     public abstract FindMarkersBoundsInArea(area: Bounds): Bounds | null;
 
     public abstract ComputeGlobalBounds(withFiltered?: boolean): Bounds | null;
 
-    public abstract GetMarkers(): ClusterMarker[];
+    public abstract GetMarkers(): VirtualMarker[];
 
     public abstract GetPopulation(): number;
 
@@ -73,4 +73,4 @@ export abstract class AbstractCluster implements ICluster {
     }
 }
 
-export default AbstractCluster;
+export default AbstractClusterHandler;

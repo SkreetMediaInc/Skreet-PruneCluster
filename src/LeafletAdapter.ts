@@ -1,21 +1,11 @@
-import {
-    Map,
-    LatLng,
-    DivIcon,
-    Marker,
-    Point,
-    LatLngBounds,
-    Layer,
-    Icon,
-    Util,
-    DomUtil,
-} from 'leaflet';
+import {DivIcon, DomUtil, Icon, LatLng, LatLngBounds, Layer, Map, Marker, Point, Util,} from 'leaflet';
 import {Cluster} from "./Cluster";
-import ClusterMarker from "./ClusterMarker";
+import VirtualMarker from "./VirtualMarker.ts";
 import {PruneCluster} from "./PruneCluster";
 import {LeafletMarker} from "./LeafletMarker";
 import {Bounds} from "./Bounds";
 import {PruneClusterLeafletSpiderfier} from "./LeafletSpiderfier";
+import {IClusterHandler} from "./IClusterHandler.ts";
 
 // @ts-ignore
 export interface LeafletAdapter implements Layer {
@@ -32,7 +22,7 @@ export interface LeafletAdapter implements Layer {
     GetMarkers: () => Marker[];
     RedrawIcons: (processView?: boolean) => void;
 
-    BuildLeafletCluster: (cluster: Cluster, position: LatLng) => Layer;
+    BuildLeafletLayer: (cluster: Cluster, position: LatLng) => Layer;
     BuildLeafletClusterIcon: (cluster: Cluster) => Icon | DivIcon;
     BuildLeafletMarker: (marker: any, position: LatLng) => Marker;
     PrepareLeafletMarker: (marker: any, data: {}, category: number) => void;
@@ -48,8 +38,16 @@ export interface ILeafletAdapterData {
     _leafletPosition?: LatLng;
 }
 
+export interface LeafletAdapterOptions {
+    size?: number;
+    clusterMargin?: number;
+    map?: Map;
+    spider: false;
+    clusterHandler?: IClusterHandler;
+}
 
-export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
+
+export class LeafletAdapter extends Layer implements LeafletAdapter {
     Cluster: PruneCluster;
     spiderfier: any;
     _objectsOnMap: any[];
@@ -62,11 +60,19 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
     _removeTimeoutId: number;
     _markersRemoveListTimeout: any[];
     clusterMargin: number;
+    spider: boolean = false;
 
-    constructor(size: number = 120, clusterMargin: number = 20, map?: Map = null) {
+    constructor(options: LeafletAdapterOptions = {
+        size: 166,
+        clusterMargin: 0.2,
+        map: null,
+        spider: false,
+        clusterHandler: new PruneCluster()
+    }) {
         super();
+        const {size = 166, clusterMargin = 0.2, map} = options;
         this.Cluster = new PruneCluster();
-        this.Cluster.Size = size;
+        this.Cluster.Size = options.size;
 
         this.clusterMargin = Math.min(clusterMargin, size / 4);
 
@@ -76,8 +82,7 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
                 throw new Error('Map is not defined');
             }
 
-            let projection = this._map!.project(new LatLng(lat, lng), Math.floor(this._map!.getZoom()));
-            return projection;
+            return this._map!.project(new LatLng(lat, lng), Math.floor(this._map!.getZoom()));
         }
 
         this.Cluster.UnProject = (x: number, y: number) => {
@@ -119,7 +124,9 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         console.log(`Registered map events: movestart, moveend, zoomstart, zoomend`);
         this.ProcessView();
 
-        map.addLayer(this.spiderfier);
+        if (this.spider) {
+            map.addLayer(this.spiderfier);
+        }
         return this;
     }
 
@@ -134,17 +141,19 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         this._objectsOnMap = [];
         this.Cluster.ResetClusters();
 
-        map.removeLayer(this.spiderfier);
+        if (this.spider || this.spiderfier) {
+            map.removeLayer(this.spiderfier);
+        }
         this._map = null;
         return this;
     }
 
-    RegisterMarker(marker: ClusterMarker | Marker): void {
+    RegisterMarker(marker: VirtualMarker | Marker): void {
         // @ts-ignore
         this.Cluster.RegisterMarker(marker);
     }
 
-    RegisterMarkers(markers: ClusterMarker[] | Marker[]): void {
+    RegisterMarkers(markers: VirtualMarker[] | Marker[]): void {
         // @ts-ignore
         this.Cluster.RegisterMarkers(markers);
     }
@@ -154,7 +163,7 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         this.Cluster.RemoveMarkers(markers);
     }
 
-    BuildLeafletCluster(cluster: Cluster, position: LatLng): Layer {
+    BuildLeafletLayer(cluster: Cluster, position: LatLng): Layer {
         const marker = new Marker(position, {
             icon: this.BuildLeafletClusterIcon(cluster)
         });
@@ -270,7 +279,7 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
         });
     }
 
-    BuildLeafletMarker(marker: ClusterMarker, position: LatLng): Marker {
+    BuildLeafletMarker(marker: VirtualMarker, position: LatLng): Marker {
         const leafletMarker = new Marker(position);
         this.PrepareLeafletMarker(leafletMarker, marker.data, marker.category);
         return leafletMarker;
@@ -580,7 +589,7 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
                 creationMarker = this.BuildLeafletMarker(icluster.lastMarker, iposition);
             } else {
                 // @ts-ignore
-                creationMarker = this.BuildLeafletCluster(icluster, iposition);
+                creationMarker = this.BuildLeafletLayer(icluster, iposition);
             }
 
             creationMarker.addTo(map);
@@ -705,4 +714,4 @@ export class PruneClusterForLeaflet extends Layer implements LeafletAdapter {
     }
 }
 
-export default PruneClusterForLeaflet;
+export default LeafletAdapter;

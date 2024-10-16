@@ -1,8 +1,21 @@
-import { defineConfig } from 'vite';
+import {defineConfig} from 'vite';
+import {terser} from 'rollup-plugin-terser';
 
 export default defineConfig({
     build: {
         rollupOptions: {
+            plugins: [
+                terser({
+                    format: {
+                        comments: false,
+                    },
+                    compress: {
+                        drop_console: true,
+                        drop_debugger: true,
+                        pure_funcs: ['performance.mark', 'performance.measure'],
+                    }
+                })
+            ],
             external: ['leaflet'],  // Exclude Leaflet from the bundle
             output: {
                 globals: {
@@ -12,9 +25,10 @@ export default defineConfig({
         },
         lib: {
             entry: './src/index.ts',  // Adjust to your entry file
-            name: 'PruneCluster',
-            fileName: 'prune-cluster',
-            formats: ['umd', 'iife'], // UMD and IIFE formats for the browser
+            name: 'LeafletClustering',
+            fileName: 'leaflet-clustering',
+            formats: ['umd', 'iife', 'es'], // UMD and IIFE formats for the browser
         },
+        target: 'modules'
     },
 });
